@@ -1,0 +1,48 @@
+# Utenti App BF
+
+<Callout type="info">
+Board ID: `1175249523` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Mappa gli utenti autenticati delle app BF (staff e clienti), con UID Firebase e ruolo.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Staff BF | topics | #808080 | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Registro di creazione | `creation_log` | Log creazione (utente/data) |
+| Uid | `text` | — |
+| Nome | `text` | — |
+| Telefono | `phone` | Numero telefonico formattato |
+| Avatar | `file` | — |
+| Ruolo | `status` | Stati: Personale BF, Cliente |
+| Staff | `board_relation` | Relazione con: Staff |
+| Password | `text` | — |
+| Attivo | `checkbox` | Flag booleano |
+| Ultimo Sync | `date` | — |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+
+## Uso operativo
+
+- Ogni item viene creato da automazioni quando un utente viene registrato tramite app.
+- La relazione `Staff` collega un utente ad un dipendente interno, mantenendo coerenza dei permessi.
+- La checkbox `Attivo` abilita/disabilita l'accesso (sincronizzato con Firebase via Make).
+
+## Integrazioni e relazioni
+
+- Sync Make.com ↔ Firebase Auth per creare/aggiornare utenti.
+- Referenziata da `Prenotazioni` per identificare l'utente app che effettua la prenotazione.
+
+## Checklist di manutenzione
+
+- Conciliare mensilmente la lista con gli utenti su Firebase Dashboard.
+- Rimuovere o archiviare utenti inattivi per più di 12 mesi (privacy).

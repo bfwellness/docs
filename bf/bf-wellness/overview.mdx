@@ -1,0 +1,35 @@
+# BF Wellness (Staff) – Panoramica
+
+`bf-wellness` è l’applicazione dedicata allo **staff delle strutture BF** (reception, responsabili SPA, operatori). È pensata per essere utilizzata su desktop/tablet, ma supporta tutte le piattaforme Flutter (web, iOS, Android).
+
+## Scopo e valore
+
+- Centralizzare le informazioni operative di una struttura: anagrafiche clienti, disponibilità operatori, agenda trattamenti, vendite e incassi.
+- Garantire una gestione rapida delle prenotazioni con flussi guidati, riducendo errori e tempi di risposta al cliente.
+- Offrire allo staff strumenti di monitoraggio (totali da incassare, vendite giornaliere) e strumenti di supporto (mappe, indirizzi, linguaggio).
+- Alimentare il backend condiviso con dati coerenti che l’app ospiti può consultare in tempo reale.
+
+## Utenti e permessi
+
+- **Reception/Front Office**: gestisce prenotazioni, incassi e anagrafiche clienti.
+- **Responsabili SPA**: supervisionano operatori, pianificano turni e controllano l’agenda.
+- **Operatori**: consultano il planning personale e aggiornano lo stato degli appuntamenti.
+- L’autenticazione avviene tramite Firebase Auth (Email/Password, Google, Facebook, Apple). I ruoli vengono definiti nel documento `users`. La UI si adatta in base ai permessi (es. accesso alle funzioni di vendita).
+
+## Principali moduli
+
+- **Dashboard/Home**: panoramica delle attività imminenti, riquadri “Da incassare”, prenotazioni del giorno e ricerca rapida di servizi/SPAs.
+- **Gestione prenotazioni**: flussi guidati multi-step (selezione servizio → operatori → data/orario → cliente → conferma) con possibilità di riprogrammare o annullare.
+- **Anagrafiche clienti**: elenco ricercabile (Algolia) con schede dettaglio, cronologia prenotazioni, pagamenti e vendite correlate.
+- **Pagamenti & Vendite**: registrazione incassi (cash, carta, addebito in camera) e chiusura vendite di prodotti/pacchetti.
+- **Ricerca globale**: accesso rapido a servizi, clienti e contenuti tramite Algolia.
+- **Strumenti di supporto**: gestione indirizzi, mappe, utility vari (router test, impostazioni lingua, aggiornamento dati utente).
+- **Onboarding**: walkthrough iniziale per nuovi membri dello staff con highlight sulle funzioni core.
+
+## Relazione con l’app ospiti
+
+- Condivide le collezioni `appointments`, `clients`, `payments`, `sales`, `service_categories`, `workers`, `accomodation_services`.
+- Gli aggiornamenti effettuati dallo staff (es. nuova prenotazione, pagamento registrato) sono immediatamente visibili agli ospiti tramite `bf-spa`.
+- Alcune operazioni sono esclusive dello staff (es. creazione clienti esterni, gestione vendite di prodotti non prenotabili dall’ospite).
+
+Per approfondire l’architettura e l’implementazione tecnica consultare la pagina [Architettura](architettura) e per il dettaglio delle funzionalità operative la sezione [Funzionalità](funzionalita).

@@ -1,0 +1,138 @@
+# Gestionale Monday.com
+
+Il team BF Wellness utilizza **Monday.com** come gestionale operativo per pianificare attività, monitorare lo stato dei progetti e coordinare le strutture. Questa pagina raccoglie le informazioni di alto livello, utile per orientare nuovi membri e garantire coerenza con gli altri asset digitali.
+
+## Scopo del gestionale
+
+- **Roadmap prodotto**: pianificazione delle evoluzioni per le app `bf-wellness` e `bf-spa`, con assegnazione a sviluppatori e referenti business.
+- **Operations di struttura**: registrazione richieste provenienti dalle SPA, attività di onboarding staff e follow-up dei clienti.
+- **Gestione operativa**: coordinamento attività quotidiane, aggiornamenti sito WordPress (`bfwellness.it`) e materiali promozionali.
+
+## Relazione con il data model Firebase
+
+- Firestore rimane il **database transazionale** per clienti, prenotazioni e pagamenti.
+- Monday funge da **strumento di orchestrazione**: le board possono referenziare record Firestore tramite ID, link o campi di testo.
+- Le sincronizzazioni sono attualmente manuali. È buona norma:
+  1. Annotare gli ID Firestore (es. `appointments/{id}`) nelle colonne Monday quando rilevanti.
+  2. Segnalare nel board eventuali script o interventi manuali eseguiti su Firebase.
+  3. Archiviare note di post-mortem o retrospettive per future automazioni.
+
+## Accesso e sicurezza
+
+- I profili Monday vengono creati e dismessi dal **Responsabile IT BF Wellness**, unico custode delle credenziali master dell’account.
+- L’accesso degli operatori avviene tramite invito email; è consigliato abilitare l’autenticazione a due fattori (2FA) e, quando possibile, SSO aziendale.
+- Ogni board va assegnata al minimo numero necessario di utenti (principio del privilegio minimo) per evitare esposizione di dati sensibili (es. richieste clienti o note contabili).
+- Log di modifiche critiche (chiusura sprint, approvazioni budget) devono essere esportati e archiviati secondo le policy interne.
+
+## Processi e naming convention
+
+<AccordionGroup>
+  <Accordion title="Struttura board">
+    - Ogni iniziativa (release, campagna, progetto struttura) deve avere un item dedicato.  
+    - Campi obbligatori:  
+      - ID Firestore/Repo (`appointments/{id}`, PR GitHub) in “Riferimenti tecnici”.  
+      - Owner funzionale e owner tecnico.  
+      - Stato coerente con workflow condiviso (Idea → Analisi → In sviluppo → QA → Pronto → Completato).  
+  </Accordion>
+  <Accordion title="Board consigliate">
+    - `Product Roadmap` – pianificazione funzionalità app staff/ospiti.
+    - `Operations & Support` – richieste strutture, ticket assistenza, incidenti.
+    - `Automazioni Make` – tracciamento scenari e manutenzione integrazioni (vedi [Automazioni Make.com](make)).
+  </Accordion>
+  <Accordion title="Allegati e documentazione">
+    - Ogni item deve includere link alle pagine Mintlify pertinenti (es. doc funzionalità, checklist operativa).  
+    - Per decisioni importanti allegare anche note retrospettive o file condivisi (PDF, screenshot).  
+    - Utilizzare i campi “note interne” per rimandi a Monday o Make correlati.
+  </Accordion>
+</AccordionGroup>
+
+## Mappa board principali
+
+<Tabs>
+  <Tab title="Master data">
+
+| Board | ID | Oggetto | Collegamenti |
+| --- | --- | --- | --- |
+| [Strutture](boards/strutture) | 1175215598 | Anagrafiche SPA/Resort (ind. e contatti) | Relazione con `Anagrafiche`, subitems checklist struttura |
+| [Anagrafiche](boards/anagrafiche) | 1175215967 | Archivio clienti/fornitori (P.IVA, SDI, PEC) | Referenziata da Strutture e Registri vendite |
+| [Staff](boards/staff) | 1175246540 | Schede dipendenti (stato, contratto, IBAN, qualifiche) | Relazioni con `Qualifiche staff`, `Utenti App BF` |
+| [Utenti App BF](boards/utenti-app-bf) | 1175249523 | Utenti Firebase (UID, ruolo, avatar) | Mirror con Staff / Prenotazioni |
+| [Trattamenti e prodotti](boards/trattamenti-e-prodotti) | 1175239733 | Catalogo servizi & retail | Collega a Categorie servizi, Qualifiche |
+| [Categorie servizi](boards/categorie-servizi) | 1179916747 | Tassonomia trattamenti | Utilizzata in Centri di ricavo, Trattamenti |
+| [Qualifiche staff](boards/qualifiche-staff) | 1185000060 | Competenze degli operatori | Aggancia Trattamenti e Staff |
+| [Listini](boards/listini) | 1175238188 | Listini per struttura con validità | Subitems dettagli voce listino |
+
+  </Tab>
+  <Tab title="Operatività">
+
+| Board | ID | Finalità | Note |
+| --- | --- | --- | --- |
+| [Prenotazioni](boards/prenotazioni) | 1175245999 | Registro booking operativo | Colonne: orario, durata, relazione con Strutture, Trattamenti, Utenti App |
+| [Registro vendite](boards/registro-vendite) | 1179900511 | Tracciamento vendite pacchetti/prodotti | Subitems (1179902697) per righe vendita, mirror importi |
+| [Incarichi staff](boards/incarichi-staff) | 1180066886 | Task/turni assegnati al personale | Subitems per attività figlie |
+| [Staff variazioni](boards/staff-variazioni) | 1186157200 | Modifiche pianificazione turni | Collegato a Staff/Strutture |
+| [Staff extra](boards/staff-extra) | 1186164407 | Straordinari/presenze aggiuntive | Usato per payroll e consuntivi |
+| [Stage](boards/stage) | 1186183758 | Gestione stagisti | Dati su tutor, fase, scadenze |
+| [Premi](boards/premi) | 1186169667 | Incentivi e bonus | Numeri e relazioni con Staff |
+| [Centri di ricavo](boards/centri-di-ricavo) | 1186178545 | KPI economici per struttura/categoria | Relazioni con Strutture e Categorie servizi |
+
+  </Tab>
+  <Tab title="Supporto & compliance">
+
+| Board | ID | Scopo | Collegamenti |
+| --- | --- | --- | --- |
+| [Firma documenti](boards/firma-documenti) | 1190068408 | Workflow firma digitale (invio, stato, file) | Relazione con `Modelli documento` e subitems dettagli |
+| [Modelli documento](boards/modelli-documento) | 1190068755 | Repository template (DOC/PDF) | Mirror file su Firma documenti |
+| [Candidature](boards/candidature) | 1176082719 | Funnel recruiting | Colonne pipeline, allegati CV |
+| [Stage](boards/stage) | 1186183758 | Gestione stagisti | Collegato a Staff/Strutture |
+
+  </Tab>
+</Tabs>
+
+> 📌 I board “Sotto elementi di …” (subitems) sono creati automaticamente da Monday per gestire voci nidificate (es. righe listino, righe vendita). Non vanno modificati strutturalmente senza verificare gli automations associati.
+
+## Relazioni chiave e mirroring
+
+<AccordionGroup>
+  <Accordion title="Master data ↔ Operatività">
+    - `Prenotazioni` collega Strutture (`board_relation`), Operatrici (Staff) e Trattamenti.  
+    - `Registro vendite` utilizza subitems per prodotti venduti e mirror per calcolare il totale.  
+    - `Listini` → subitems con mirror del prezzo/durata dal board Trattamenti.
+  </Accordion>
+  <Accordion title="Anagrafiche digitali">
+    - Colonne `FirestoreId` presenti su Strutture, Staff, Trattamenti, Utenti App consentono sincronizzazione con Firestore.  
+    - `Utenti App BF` mantiene UID, ruolo e checkbox “Attivo”: quando aggiornato, un automation Make aggiorna l’utente Firestore (vedi [Automazioni Make.com](make)).
+  </Accordion>
+  <Accordion title="Documenti & Compliance">
+    - `Firma documenti` → relation con `Modelli documento` (selezione template).  
+    - Subitems “Sotto elementi di Firma documenti” gestiscono step di firma, esportando file firmati.  
+    - Mirror “File” porta nel board principale il PDF generato.
+  </Accordion>
+</AccordionGroup>
+
+## Query di riferimento (API Monday)
+
+<Callout type="info">
+Le strutture sopra sono state ricostruite usando GraphQL API Monday. Esempio di query per ottenere schema board:
+</Callout>
+
+```graphql
+query BoardsSchema {
+  boards(limit: 10) {
+    id
+    name
+    groups { id title }
+    columns { id title type settings_str }
+  }
+}
+```
+
+Usare la chiave API personale in `Authorization` (vedi [Documentazione ufficiale](https://api.developer.monday.com/docs)).
+
+## Automazioni e integrazioni
+
+- Inviare notifiche Slack/Email attraverso le automazioni native quando un item passa allo stato “In sviluppo” o “Pronto al rilascio”.
+- Valutare l’uso di webhook Monday → Firebase Functions per creare tasks tecnici (es. apertura branch, trigger pipeline) quando un item viene approvato.
+- Dashboard consolidate: configurare chart che incrociano KPI Monday (numero richieste aperte) con dati Firestore (prenotazioni, incassi).
+
+> ℹ️ Quando vengono definiti nuovi board o automazioni, aggiornare questa pagina con link diretti e screenshot, mantenendo Monday come compagno operativo di questa documentazione.

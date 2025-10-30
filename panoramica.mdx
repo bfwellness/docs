@@ -1,0 +1,109 @@
+Benvenuto nella documentazione tecnica completa dell'ecosistema **BF Wellness**.
+
+## Panoramica del Progetto
+
+BF Wellness è un ecosistema digitale completo per la gestione di strutture wellness e SPA, composto da:
+
+- **BF Wellness (Staff App)** - Applicazione desktop/mobile per staff di reception e operatori
+- **BF Spa (Guest App)** - Applicazione web/mobile per ospiti e clienti
+- **Firebase Backend** - Database, autenticazione, storage e cloud functions
+- **Monday.com** - Sistema CRM e gestione operativa (24 boards sincronizzate)
+- **Make.com** - Piattaforma automazione e workflow (8 scenari attivi)
+- **Altre Integrazioni** - Algolia (ricerca), Stripe (pagamenti), Google Maps
+
+<CardGroup cols={2}>
+  <Card title="Architettura Sistema" icon="building" href="/architecture/overview">
+    Design sistema, data model, autenticazione, state management
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/firestore-collections">
+    Documentazione completa collections Firestore, Cloud Functions, Custom Actions
+  </Card>
+  <Card title="Features & Flussi" icon="diagram-project" href="/features/booking/overview">
+    Booking, gestione clienti, pagamenti, vendite
+  </Card>
+  <Card title="Integrazioni" icon="plug" href="/api-reference/integrations/monday">
+    Monday.com, Make.com, Algolia, Stripe
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+<Steps>
+  <Step title="Comprendi l'Architettura">
+    Familiarizza con il data model e l'architettura del sistema
+
+    [Architettura Overview →](/architecture/overview)
+  </Step>
+  <Step title="Esplora le API">
+    Studia le collections Firestore e le integrazioni
+
+    [API Reference →](/api-reference/firestore-collections)
+  </Step>
+  <Step title="Approfondisci le Features">
+    Comprendi i flussi principali: booking, clienti, pagamenti
+
+    [Features →](/features/booking/overview)
+  </Step>
+</Steps>
+
+## Info Tecniche Chiave
+
+<Accordion title="Stack Tecnologico">
+  - **Framework**: Flutter 3.27.2 (Dart 3.6.1)
+  - **Code Generation**: FlutterFlow
+  - **Backend**: Firebase (Firestore, Auth, Storage, Functions)
+  - **Search**: Algolia
+  - **Payments**: Stripe (solo bf-spa)
+  - **Maps**: Google Maps Platform
+  - **State**: Provider + SharedPreferences
+  - **Navigation**: GoRouter 7.1.1
+</Accordion>
+
+<Accordion title="Firebase Project">
+  - **Project ID**: `bf-wellness-app`
+  - **Region**: europe-west3
+  - **Collections**: 13 (bf-wellness: 10, bf-spa: +3)
+  - **Auth Providers**: Email, Google, Apple, Facebook, GitHub, Anonymous
+</Accordion>
+
+<Accordion title="Differenze tra Apps">
+  - **bf-wellness**: App staff singola struttura (v1.0.3+4)
+  - **bf-spa**: App staff multi-struttura con Stripe e training (v1.0.0+1)
+  - **Codice condiviso**: ~90% della codebase è comune
+  - **Firebase SDK**: bf-wellness usa 2.x, bf-spa usa 3.x (da unificare)
+</Accordion>
+
+## Stato Documentazione
+
+<Note>
+  Questa documentazione è stata generata tramite reverse engineering completo del codebase.
+
+  **Ultimo aggiornamento**: Ottobre 2025
+</Note>
+
+<Warning>
+  **Integrazioni Monday.com e Make.com**: Alcune sezioni relative alle integrazioni esterne
+  contengono placeholder in attesa di token API validi per completare l'analisi.
+</Warning>
+
+## Risorse Utili
+
+### Gestione Progetti & Automazione
+- **Monday.com** - [Dashboard BF Wellness](https://bf-wellness.monday.com/) - CRM e gestione operativa (24 boards sincronizzate)
+- **Make.com** - [Scenarios & Automations](https://www.make.com/) - Piattaforma automazione workflow (8 scenari attivi)
+
+### Sviluppo & Deploy
+- **Firebase Console** - [console.firebase.google.com](https://console.firebase.google.com) - Backend, database, auth, storage
+- **FlutterFlow** - [app.flutterflow.io](https://app.flutterflow.io) - Visual development e code generation
+
+### Servizi Esterni
+- **Algolia** - [Dashboard](https://www.algolia.com/dashboard) - Search e indexing (Application ID: JQA9QP4JNP)
+- **Stripe** - [Dashboard](https://dashboard.stripe.com/) - Payment processing (solo bf-spa)
+- **Google Maps Platform** - [Console](https://console.cloud.google.com/google/maps-apis/) - Maps API e location services
+
+### Documentazione
+- **README Apps** - File README nelle cartelle `apps/bf-wellness` e `apps/bf-spa`
+
+---
+
+**Per iniziare** → [Panoramica Architettura](/architecture/overview)

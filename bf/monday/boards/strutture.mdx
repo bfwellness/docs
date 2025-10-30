@@ -1,0 +1,57 @@
+# Strutture
+
+<Callout type="info">
+Board ID: `1175215598` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Gestisce l'anagrafica delle strutture BF Wellness (SPA e resort), con informazioni logistiche, contatti e stato di pubblicazione del sito pubblico.
+- I gruppi "Nazionali" ed "Estere" consentono di separare le strutture per mercato.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Nazionali | topics | #579bfc | 65536 |
+| Estere | group_title | #a25ddc | 98304 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Anagrafica | `board_relation` | Relazione con: Anagrafiche |
+| Indirizzo | `location` | — |
+| Operatrici assegnate | `numbers` | — |
+| Operatrici attive | `numbers` | — |
+| Telefono | `phone` | Numero telefonico formattato |
+| Email | `email` | Campo email con link mailto |
+| Nazione | `dropdown` | Opzioni: Italia, Spagna, Egitto, Grecia |
+| Sito web | `link` | — |
+| Sito | `status` | Stati: Pubblicato, Non pubblicato |
+| Regione | `dropdown` | Opzioni: Calabria, Sardegna, Veneto, Marche, Lazio, Puglia, Campania, Estero |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+| Sotto elementi | `subtasks` | Subitems gestiti dalla board: Sotto elementi di Strutture |
+
+## Uso operativo
+
+- Ogni item corrisponde a una struttura reale con indirizzo geolocalizzato (colonna `Indirizzo`).
+- Il team Operations aggiorna telefono, email e link al sito quando cambia la comunicazione pubblica.
+- Le metriche `Operatrici assegnate`/`Operatrici attive` vengono sincronizzate con la board Staff extra/variazioni per pianificare turni.
+- La relazione `Anagrafica` punta alla board `Anagrafiche` per condividere dati fiscali/legali del proprietario o società collegata.
+- Il campo `FirestoreId` mantiene la referenza verso la collezione `accomodations` utilizzata dalle app Flutter.
+
+## Integrazioni e relazioni
+
+- Relazione `Anagrafica` ↔ board `Anagrafiche` (id 1175215967) per evitare duplicazione dei dati fiscali.
+- Subitems collegati alla board `Sotto elementi di Strutture` (id 1900471317) per note operative e check-list specifiche.
+- Automazioni Make programmate per aggiornare status `Sito` in base allo stato WordPress (da completare).
+- Campo `FirestoreId` utilizzato dalle funzioni di sync (Make) per aggiornare Firestore `accomodations`.
+
+## Checklist di manutenzione
+
+- Verifica trimestrale di indirizzi e contatti con i referenti di struttura.
+- Controllare che il numero di operatrici attive corrisponda alle assunzioni presenti su `Staff`.
+- Aggiornare lo stato `Sito` dopo ogni rilascio WordPress o messa offline.
+- Revisionare i subitems (check-list struttura) dopo audit operativi.

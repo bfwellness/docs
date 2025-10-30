@@ -1,0 +1,79 @@
+# Dashboard e navigazione (BF Wellness Staff)
+
+La home dell’app `bf-wellness` è progettata per dare allo staff un colpo d’occhio sulla giornata e accesso rapido alle funzioni principali. Questa pagina descrive i widget utilizzati, le query Firestore e le logiche ausiliarie.
+
+## Layout principale
+
+<Columns cols={3}>
+  <Card title="Side navigation" icon="bars">
+    `lib/components/side_nav/side_nav_bar/side_nav_bar_widget.dart` sincronizzata con `FFAppState.currentNavIndex`.
+    <br/>
+    Visibilità adattiva tramite `responsiveVisibility` (desktop vs mobile).
+  </Card>
+  <Card title="Top bar" icon="user">
+    `lib/components/top_nav_bar_widget.dart` con ricerca Algolia, lingua, profilo.
+    <br/>
+    Legge i dati da `currentUserDocument`.
+  </Card>
+  <Card title="Router tecnico" icon="bolt" href="bf/bf-wellness/operations">
+    Shortcut interno `router_widget` per aprire rapidamente qualsiasi schermata in debug/Q&A.
+  </Card>
+</Columns>
+
+## Home widget
+
+File centrale: `lib/screens/home/home_widget.dart`.
+
+### Blocchi principali
+
+<AccordionGroup>
+  <Accordion title="Intestazione personalizzata">
+    - Saluto dinamico (`currentUserDisplayName` da `auth_util.dart`).  
+    - CTA “Nuova prenotazione” → `Booking_service_selection`.  
+    - Mostra anche messaggi contestuali (es. onboarding o promemoria Monday).
+  </Accordion>
+  <Accordion title="Widget &quot;Da incassare&quot;">
+    - Query `ClientsRecord` → somma campi `toPay`.  
+    - Visualizzato da `ToCollectAmountWidget`.  
+    - Calcolo in `clientsTotalToPay()` (`custom_functions.dart:272`).  
+    - Collega al board Monday &quot;Incassi&quot; per riconciliazioni di fine giornata.
+  </Accordion>
+  <Accordion title="Prenotazioni imminenti">
+    - Stream `queryAppointmentsRecord` filtrato su `startDate` odierna e `canceled == false`.  
+    - Le card mostrano `serviceData`, `workersData`, `clientData`.  
+    - Shortcut verso `Bookings_agenda` per azione immediata.
+  </Accordion>
+  <Accordion title="Attività recenti">
+    - Stream `PaymentsRecord` + `SalesRecord`.  
+    - Indica metodo pagamento (`PaymentMethods`), importo e timestamp.  
+    - Possibilità di estendere con grafici settimanali (`charts_flutter`).
+  </Accordion>
+</AccordionGroup>
+
+### Ricerca e scorciatoie
+
+<Checklist>
+  <ChecklistItem>Ricerca globale tramite Algolia (`FFAlgoliaManager`). Indici: servizi, clienti, pacchetti.</ChecklistItem>
+  <ChecklistItem>Pulsanti rapidi: aprono `clients_widget`, `bookings_list`, `sales`.</ChecklistItem>
+  <ChecklistItem>Ricerca memorizza gli ultimi termini (preferenze utente) in `FFAppState`.</ChecklistItem>
+</Checklist>
+
+## Widget condivisi
+
+| Componente | File | Note |
+| --- | --- | --- |
+| Card clienti | `lib/components/clients_card/…` (generato da FlutterFlow) | Usata sia in home che in `clients_widget`. |
+| Elenco servizi | `lib/components/services_list/services_list_widget.dart` | Raggruppa i servizi per categoria (`ServiceCategoriesRecord`). Filtra `AccomodationServicesRecord` con `calendarReservations == 1`. |
+| Pacchetti | `lib/components/packages_list/packages_list_widget.dart` | Visualizza prodotti/pacchetti da `ProductsRecord` (tipo `package`). |
+
+## Collegamenti ai dati
+
+- **Appointments**: ogni card mostra `startDate`, `duration`, `serviceData.name` e `workersData`. Riferirsi a `lib/backend/schema/appointments_record.dart`.
+- **Clients**: il totale “Da incassare” è coerente con il campo `ClientsRecord.toPay`.
+- **Payments/Sales**: i pannelli laterali leggono `PaymentsRecord.method` (enum `PaymentMethods`, `lib/backend/schema/enums/enums.dart`) e `SalesRecord.items`.
+
+## Best practice operative
+
+- Controllare periodicamente che gli indici Firestore supportino le query combinate (vedi `firebase/firestore.indexes.json`).
+- Se si aggiungono nuove metriche in home, implementare l’aggregazione in `custom_functions.dart` per evitare duplicazione di calcoli lato widget.
+- Per mantenere consistenza con il gestionale Monday, inserire nel board “Operazioni” i KPI mostrati qui (es. totale da incassare) quando vengono estratti manualmente.

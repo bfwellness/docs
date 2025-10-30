@@ -1,0 +1,69 @@
+# Pagamenti e vendite (BF Wellness Staff)
+
+Questo modulo consente allo staff di registrare incassi, gestire metodi di pagamento e chiudere vendite di prodotti/pacchetti. Tutte le operazioni aggiornano le collezioni `payments`, `sales` e i campi aggregati nel documento cliente, come descritto nel [modello dati](../data-model#firestore).
+
+## Registrazione incassi
+
+<Columns cols={2}>
+  <Card title="Schermata & input" icon="cash-register">
+    - `payment_create_widget.dart`  
+    - Inizializza `_model.toPay` con debito residuo (`ClientsRecord.toPay`)  
+    - Importo suggerito precompilato in `textController1`
+  </Card>
+  <Card title="Metodi e associazioni" icon="list-check">
+    - Enum `PaymentMethods`: `credit_card`, `cash`, `room`  
+    - Selezione tramite `FlutterFlowRadioButton`  
+    - Associa prenotazioni aperte (`AppointmentsRecord`) per incassi mirati
+  </Card>
+</Columns>
+
+<Callout type="info">
+I listener su `textFieldFocusNode1/2` aggiornano il saldo residuo in tempo reale; fondamentale per gestire incassi parziali.
+</Callout>
+
+### Conferma incasso
+
+- **Widget**: `lib/screens/payments/payment_confirm/payment_confirm_widget.dart`.
+- **UI**:
+  - Mostra animazione di successo (`Lottie`) e riepilogo transazione.
+  - Pulsanti di ritorno a elenco pagamenti/agenda.
+- **Persistenza**:
+  - Salvataggio tramite `createPaymentsRecordData()` (`lib/backend/schema/payments_record.dart`), includendo eventuale riferimento a `AppointmentsRecord`.
+  - Aggiornamento del campo `ClientsRecord.toPay` (riducendo l’importo) e incremento `ClientsRecord.paid`.
+
+## Vendite di prodotti/pacchetti
+
+<AccordionGroup>
+  <Accordion title="Creazione">
+    - Avvio da `packages_list` oppure da scheda cliente.  
+    - `ProductsRecord` filtrati per tipologia (pacchetto / trattamento).  
+    - Possibilità di aggiungere sconti e note promozionali.
+  </Accordion>
+  <Accordion title="Conferma vendita">
+    - Widget `sale_confirm_widget`.  
+    - Riepilogo articoli (`SaleItemsStruct`), importi, eventuali sconti.  
+    - Animazione `Lottie` + CTA per aprire agenda e generare appuntamenti legati.
+  </Accordion>
+  <Accordion title="Dettaglio e storicità">
+    - `sale_details_widget` mostra articoli, operatori, stato pagamento.  
+    - Collegamento diretto a prenotazioni (`BookingDetailsWidget`) quando presenti.  
+    - Sfruttare questi dati per upselling e statistiche di vendita in Monday.
+  </Accordion>
+</AccordionGroup>
+
+## Collegamenti incrociati
+
+- **Dashboard**: i nuovi pagamenti aggiornano il widget “Da incassare” (vedi [Dashboard e navigazione](dashboard)).
+- **Clienti**: la scheda cliente mostra tab “Pagamenti” e “Vendite” con i record generati da queste schermate (vedi [Gestione clienti](clienti)).
+- **App ospiti**: i pagamenti registrati qui sono visibili in `bf-spa` quando l’utente consulta la propria cronologia (snapshot `ClientDataStruct`).
+
+## Reportistica e monitoraggio
+
+- Per report giornalieri è possibile esportare i dati direttamente da Firestore (filtrando per `created_time` e `method`) o predisporre Collection Group query.
+- Considerare la sincronizzazione con Monday.com per registrare incassi di eventi speciali o promozioni.
+
+## Best practice
+
+- Registrare il pagamento immediatamente dopo l’incasso per evitare discrepanze nel campo `toPay`.
+- Utilizzare le note (`PaymentsRecord.notes`) per indicare numeri di ricevuta o riferimenti contabili.
+- Quando si annulla una vendita, aggiornare sia `SalesRecord.status` sia eventuali prenotazioni generate dalla vendita.

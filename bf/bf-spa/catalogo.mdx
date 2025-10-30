@@ -1,0 +1,69 @@
+# Home e catalogo (BF Spa Ospiti)
+
+La sezione di ingresso dell’app `bf-spa` accompagna l’ospite dalla scelta della struttura alla scoperta dei servizi disponibili. Questa pagina descrive i widget principali, le query Firestore e i contenuti editoriali.
+
+## Selezione struttura
+
+- **Widget**: `lib/accomodations/accomodations_widget.dart`.
+- **Dati**:
+  - Stream su `AccomodationsRecord` per popolare lista e mappa.
+  - Filtri per località, categoria servizio e tag (`accomodation_services` e `service_categories`).
+- **UI**:
+  - Layout a due colonne con card struttura (nome, descrizione, immagini hero) e mappa (`GoogleMap` via `flutter_flow/flutter_flow_google_map.dart`).
+  - CTA “Scopri servizi” apre il catalogo filtrato sulla struttura selezionata (salvato in `FFAppState.selectedAccomodation`).
+- **Operatori**:
+  - `AccomodationWorkersRecord` lega operatori disponibili a ogni struttura per mostrare competenze e fasce orarie.
+
+## Home personalizzata
+
+- **Widget**: `lib/screens/home/home_widget.dart`.
+- **Componenti**:
+  - Saluto utente (`currentUserDisplayName`) e CTA “Prenota ora”.
+  - Cards con prenotazioni future (`AppointmentsRecord` filtrati su `client == currentUserReference`).
+  - Sezioni “Consigliati” e “Pacchetti” basate su funzioni custom (`functions.filterServices`, `functions.formatDate`).
+  - Banner promozionale alimentato da contenuti in Firestore (collezione `marketing_banners`, se presente) oppure asset statici.
+- **Widget riutilizzati**:
+  - `ToCollectAmountWidget` mostra crediti residui/da pagare dell’utente (stessa logica staff ma contestualizzata).
+  - `NavbarWidget` e `SideNavBarWidget` con `currentItem` settato (`dashboard`, `spa_management`) per evidenziare la voce attiva.
+
+## Catalogo servizi e pacchetti
+
+- **Componenti**:
+  - `lib/components/services_list/services_list_widget.dart` (versione client) mostra categorie espandibili con immagini e descrizioni.
+  - `lib/components/packages_list/packages_list_widget.dart` evidenzia pacchetti o esperienze speciali (`ProductsRecord`).
+- **Filtri**:
+  - Ordina per durata, prezzo, popolarità.
+  - Opzioni per mostrare solo servizi disponibili nella struttura selezionata (filtro su `accomodation_services`).
+- **Dettaglio servizio**:
+  - Card con galleria immagini, descrizione, durata (`serviceData.duration`), prezzo e operatori certificati (`qualifications`).
+  - CTA “Prenota” che avvia il flusso di booking passando `AccomodationServicesRecord`.
+
+## Ricerca
+
+- **Schermata**: `lib/screens/search/search_widget.dart`.
+- **Backend**:
+  - Algolia (`FFAlgoliaManager`) indicizza `AccomodationServicesRecord`, `ProductsRecord` e `WorkersRecord`.
+  - Filtri aggiuntivi per durata/prezzo e disponibilità, con highlight dei termini.
+- **UX**:
+  - Risultati raggruppati per tipo (servizi, pacchetti, operatori).
+  - Shortcut tastiera su web (gestita via `RawKeyboardListener` generato da FlutterFlow).
+
+## Contenuti editoriali
+
+- **Training**: `lib/screens/training/training/training_widget.dart` offre video esperienziali (`TrainingVideosRecord`), riprodotti con `youtube_player_iframe`.
+- **Blog / news**: eventuali collezioni `articles` possono essere integrate seguendo lo stesso pattern (non presenti di default).
+- **Hero**:
+  - Immagini e copy personalizzabili tramite Firestore oppure asset in `assets/images`.
+  - Consigliato mantenere allineamento con il sito WordPress ([vedi pagina dedicata](../website)).
+
+## Collegamenti al data model
+
+- `AccomodationsRecord`, `AccomodationServicesRecord` e `AccomodationWorkersRecord` sono descritti in [Modello dati](../data-model#collezioni-specifiche-di-bf-spa).
+- Le scelte dell’utente (struttura, servizio) vengono salvate in `FFAppState` per essere riutilizzate durante la prenotazione e nella navigazione (es. filtrare pacchetti).
+- I contenuti training referenziano `TrainingVideosRecord` con campi `videoUrl`, `tags`, `order`.
+
+## Best practice
+
+- Aggiornare periodicamente le immagini structure/pacchetti tramite Firebase Storage per garantire coerenza con il sito pubblico.
+- Se si aggiungono nuove categorie, assicurarsi che siano presenti sia in Firestore (`service_categories`) sia in Algolia (re-indicizzare).
+- Coordinare campagne/promo con Monday.com per allineare copy e disponibilità mostrata all’utente.

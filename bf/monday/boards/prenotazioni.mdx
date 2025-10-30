@@ -1,0 +1,54 @@
+# Prenotazioni
+
+<Callout type="info">
+Board ID: `1175245999` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Registro operativo delle prenotazioni gestite dallo staff, sincronizzato con le app Flutter.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Registro prenotazioni | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Stato | `status` | Stati: In svolgimento, Fatto, Bloccato |
+| Data | `date` | — |
+| Registro di creazione | `creation_log` | Log creazione (utente/data) |
+| Ora inizio | `hour` | Formato orario: 24H |
+| Ora fine | `hour` | Formato orario: 24H |
+| Struttura | `board_relation` | Relazione con: Strutture |
+| Prezzo | `numbers` | Unità: € |
+| Durata | `numbers` | — |
+| Operatrici | `board_relation` | Relazione con: Staff |
+| Cliente | `text` | — |
+| Camera | `text` | — |
+| Email | `email` | Campo email con link mailto |
+| Prenotato da | `status` | Stati: Cliente, Personale BF |
+| Utente App | `board_relation` | Relazione con: Utenti App BF |
+| Trattamento | `board_relation` | Relazione con: Trattamenti e prodotti |
+| ID elemento | `item_id` | ID interno Monday (per API) |
+
+## Uso operativo
+
+- Ogni voce rappresenta una prenotazione confermata.
+- Colonne `Ora inizio`/`Ora fine` definiscono lo slot orario.
+- `Operatrici` relazione con board Staff per assegnazione team.
+- `Utente App` collega il booking all'utente digitale.
+
+## Integrazioni e relazioni
+
+- Relazioni con `Strutture`, `Trattamenti`, `Utenti App`.
+- Campo `ID elemento` usato nelle automazioni Make per aggiornare Firestore `appointments`.
+
+## Checklist di manutenzione
+
+- Verificare coerenza con calendario Google/agenda interna.
+- Archiviare prenotazioni concluse dopo il periodo di reporting.

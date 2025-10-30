@@ -1,0 +1,51 @@
+# Creare una Prenotazione
+
+Flusso completo per creare una nuova prenotazione.
+
+## User Flow
+
+```mermaid
+sequenceDiagram
+    participant U as Staff User
+    participant App
+    participant FB as Firestore
+
+    U->>App: BookingServiceSelection
+    App->>FB: Query available services
+    FB-->>App: Services list
+    U->>App: Select service
+
+    U->>App: BookingOperatorsSelection
+    App->>FB: Query available workers
+    FB-->>App: Workers list
+    U->>App: Select worker(s)
+
+    U->>App: BookingClientSelection
+    App->>FB: Search client (Algolia)
+    FB-->>App: Client results
+    U->>App: Select/create client
+
+    U->>App: BookingDateSelection
+    App->>FB: Query available slots
+    FB-->>App: Time slots
+    U->>App: Select date/time
+
+    U->>App: BookingConfirm
+    App->>FB: Create appointment
+    FB-->>App: Success
+    App-->>U: Show confirmation
+```
+
+## Screens Involved
+
+1. `BookingServiceSelectionWidget`
+2. `BookingOperatorsSelectionWidget`
+3. `BookingClientSelectionWidget`
+4. `BookingDateSelectionWidget`
+5. `BookingConfirmWidget`
+
+## Code Reference
+
+**Location**: `apps/bf-wellness/lib/screens/booking/`
+
+[Complete implementation guide TBD]

@@ -1,0 +1,125 @@
+# Architettura applicativa (BF Wellness Staff)
+
+Questa sezione descrive come è organizzata l’app `bf-wellness` dal punto di vista tecnico, includendo stack, routing, gestione dati e componenti riutilizzabili.
+
+## Stack tecnologico
+
+- **Flutter 3 (channel stable)** con output multipiattaforma (web desktop first).
+- **FlutterFlow** come generatore: garantisce coerenza del codice (`lib/screens`, `lib/components`, `lib/flutter_flow`).
+- **Gestione stato**: `Provider` + `ChangeNotifier` (`FFAppState` e modelli generati).
+- **Routing**: `GoRouter` con definizioni in `lib/flutter_flow/nav`.
+- **Backend**: Firebase (Auth, Firestore, Storage), Algolia per ricerca, Google Maps/Places per localizzazione.
+- **Librerie chiave**:
+  - `cloud_firestore`, `firebase_auth`, `firebase_storage`, `firebase_core`.
+  - `go_router` (navigazione), `provider` (stato), `google_maps_flutter` e `geolocator`.
+  - `algolia` per completion e ricerca.
+  - `intl`, `timeago` per formattazioni date/tempo.
+
+## Struttura del progetto
+
+La root `apps/bf-wellness` è organizzata come segue:
+
+```text
+apps/bf-wellness/
+├─ lib/
+│  ├─ screens/                 # Schermate generate da FlutterFlow (cartella per funzionalità)
+│  ├─ components/              # Widget riutilizzabili
+│  ├─ backend/
+│  │  ├─ schema/               # Record Firestore e struct denormalizzate
+│  │  ├─ firebase/             # Configurazione init Firebase
+│  │  └─ firebase_storage/     # Helper upload/download
+│  ├─ flutter_flow/            # Framework FlutterFlow (tema, nav, util)
+│  ├─ custom_code/             # Azioni/funzioni custom preservate tra gli export
+│  ├─ auth/                    # Helper autenticazione Firebase
+│  ├─ app_state.dart           # Stato globale (FFAppState)
+│  ├─ index.dart               # Export schermate per GoRouter
+│  └─ main.dart                # Bootstrap app
+├─ assets/
+│  ├─ images/                  # Loghi, immagini onboarding, icone
+│  ├─ videos/, audios/, pdfs/  # Media vari utilizzati dall’interfaccia
+│  └─ fonts/                   # Font personalizzati
+├─ firebase/
+│  ├─ functions/               # Cloud Functions (Node.js)
+│  ├─ firestore.rules          # Regole Firestore
+│  ├─ firestore.indexes.json   # Indici Firestore
+│  └─ storage.rules            # Regole Firebase Storage
+├─ android/, ios/, web/        # Progetti piattaforme nativi
+└─ pubspec.yaml                # Manifest dipendenze Flutter
+```
+
+> 📁 Quando si effettua un re-export da FlutterFlow, assicurarsi di preservare `custom_code`, `firebase`, asset multimediali e le configurazioni manuali presenti nelle cartelle piattaforma.
+
+## Bootstrap
+
+Il file `lib/main.dart`:
+
+1. Inizializza Flutter (`WidgetsFlutterBinding.ensureInitialized`).
+2. Abilita `usePathUrlStrategy()` per URL “puliti” nel web.
+3. Chiama `initFirebase()` (in `lib/backend/firebase/firebase_config.dart`) che inizializza l’app Firebase con le credenziali `bf-wellness-app`.
+4. Inizializza il tema (`FlutterFlowTheme.initialize()`).
+5. Crea l’istanza globale `FFAppState` e ne carica i valori persistiti (`firstLogin`, `currentLocation`, `currentNavIndex`).
+6. Avvia `MaterialApp.router` con `GoRouter` generato da `createRouter(AppStateNotifier)`.
+
+## Routing e navigazione
+
+- Le rotte sono esportate in `lib/index.dart`, dove ogni schermata è referenziata e può essere richiamata dal router.
+- `GoRouter` sfrutta `AppStateNotifier` (in `lib/flutter_flow/nav/app_state.dart`) per gestire lo splash di autenticazione e la redirezione dopo il login.
+- La UI principale è un layout a due colonne:
+  - `SideNavBarWidget` per la navigazione desktop (vedi `lib/components/side_nav/side_nav_bar`).
+  - `TopNavBarWidget` con ricerca, lingua e profilo.
+- Su dispositivi mobile/tablet la side nav diventa un drawer (controllato da `responsiveVisibility`).
+
+## Gestione stato e dati
+
+- **`FFAppState`** (`lib/app_state.dart`): conserva preferenze utente globali, come lingua, indice di navigazione e posizione corrente. L’app lo rende disponibile via `ChangeNotifierProvider`.
+- **Modelli delle schermate**: ogni `<page>_model.dart` estende `FlutterFlowModel`, gestisce controller (es. `TextEditingController`, `FocusNode`) e sottocomponenti.
+- **Firestore records**: in `lib/backend/schema` sono definiti i record (es. `AppointmentsRecord`, `ClientsRecord`) con helper per stream e fetch singolo.
+- **Query**: `backend/backend.dart` espone funzioni come `queryAppointmentsRecord` o `queryClientsRecordOnce`. Le schermate usano `StreamBuilder`/`FutureBuilder` generati automaticamente.
+- **Algolia**: `ClientsRecord.search` e analoghi utilizzano `FFAlgoliaManager` (API key `JQA9QP4JNP`). Configurare gli indici lato Algolia con gli stessi nomi.
+- **Custom code**: logica aggiuntiva in `lib/custom_code/actions` e funzioni in `lib/flutter_flow/custom_functions.dart`. Esempi:
+  - `generateWorkerAvailableTimeSlots` – calcola slot disponibili escludendo appuntamenti esistenti.
+  - `extractAppointmentFromJson` – mapping di payload esterni in strutture interne.
+
+## Moduli principali
+
+### Prenotazioni (`lib/screens/booking`)
+
+- Serie di schermate step-by-step (selezione servizio, operatore, data, cliente, conferma).
+- Le ricerche di disponibilità utilizzano `generateAvailableTimeSlots` e query su `appointments`.
+- Esistono versioni per agenda (`bookings_agenda`) e lista (`bookings_list`) con filtri per data e stato.
+
+### Clienti (`lib/screens/clients`)
+
+- Schermata principale `clients_widget` con filtri, ricerca Algolia e statistiche (totale speso).
+- Scheda dettaglio (`client_details_widget`) mostra cronologia, pagamenti e vendite.
+- Flussi dedicati per creare (`client_create`), modificare (`client_edit`) e gestire import storico (`clients_old`).
+
+### Pagamenti e vendite
+
+- Moduli `payments/payment_create` e `payment_confirm` per registrare incassi manuali, integrati con l’anagrafica clienti.
+- Moduli `sales/sale_confirm` e `sale_details` per la vendita di prodotti e pacchetti, con calcolo automatico di totali/sconti.
+- Utilizzo dell’enum `PaymentMethods` (`credit_card`, `cash`, `room`) per definire il canale.
+
+### Localizzazione e supporto
+
+- `location_map`, `location_places_map`, `location_search` integrano Google Maps/Places e `geolocator` per individuare strutture o pianificare servizi a domicilio.
+- `addresses_widget` offre una vista organizzativa sulle SPA collegate.
+
+## Internazionalizzazione
+
+- Lingue supportate: italiano (`it`), inglese (`en`), spagnolo (`es`).
+- I testi sono definiti in `lib/flutter_flow/internationalization.dart`, organizzati per schermo.
+- Il selettore lingua aggiorna `FFAppState` e la locale di `MaterialApp`.
+
+## Logging e diagnostica
+
+- L’app utilizza `debugPrint`/`print` generati da FlutterFlow per debug. È possibile introdurre strumenti aggiuntivi (ad es. Sentry) aggiungendo i plugin nel `pubspec.yaml`.
+- Per monitorare errori runtime lato Firebase, abilitare Crashlytics (non incluso di default in questa app).
+
+## Estensioni suggerite
+
+- **Ruoli e permessi**: attualmente gestiti tramite condizioni di visibilità nei widget. Valutare l’introduzione di un sistema centralizzato in `FFAppState` per semplificare la manutenzione.
+- **Test automatizzati**: il progetto include cartella `test`, ma pochi casi. Introdurre widget test su moduli core (prenotazioni, pagamenti).
+- **Cache offline**: considerare l’uso di `infinite_scroll_pagination` e `cached_network_image` (già dipendenze) per ottimizzare performance in contesti con rete instabile.
+
+Per indicazioni operative (setup, build, deploy) vedere [Operatività](../../operativita). Per flussi funzionali nel dettaglio consultare [Funzionalità](funzionalita).

@@ -1,0 +1,487 @@
+# Automazioni Make.com
+
+BF Wellness utilizza **Make.com** (ex Integromat) per sincronizzare automaticamente i dati tra Monday.com e Firebase Firestore, garantendo coerenza tra il gestionale operativo e il database delle applicazioni mobili.
+
+## Panoramica
+
+<CardGroup cols={2}>
+  <Card title="Ruolo di Make.com" icon="rotate">
+    **Sincronizzazione bidirezionale**
+    - Monday.com → Firestore (master data)
+    - Firestore → Monday.com (dati transazionali)
+    - Pattern CREATE/UPDATE automatico
+    - Tracking sincronizzazione
+  </Card>
+
+  <Card title="Scenari Attivi" icon="list-check">
+    **8 scenari di sincronizzazione**
+    - 5 scenari master data
+    - 3 scenari gestione staff
+    - Automazioni operative aggiuntive
+    - [Documentazione tecnica dettagliata →](/api-reference/integrations/make)
+  </Card>
+
+  <Card title="Campi di Tracking" icon="database">
+    **Su ogni board Monday.com**
+    - `FirestoreId` - ID documento Firestore
+    - `Ultimo Sync` - Timestamp sincronizzazione
+    - Pattern unificato per tutti gli scenari
+  </Card>
+
+  <Card title="Vantaggi" icon="check">
+    **Coerenza dati garantita**
+    - Nessun dato duplicato
+    - Aggiornamenti automatici
+    - Tracciabilità completa
+    - Riduzione errori manuali
+  </Card>
+</CardGroup>
+
+## Logica di Sincronizzazione
+
+Tutti gli scenari Make.com seguono lo stesso pattern di sincronizzazione basato sul campo `firestoreId`.
+
+### Pattern CREATE/UPDATE
+
+<Steps>
+  <Step title="Verifica esistenza documento">
+    Make.com controlla se l'item su Monday.com ha un valore nel campo `FirestoreId`.
+  </Step>
+
+  <Step title="CREATE - Se firestoreId è vuoto">
+    **Azione**: Crea nuovo documento in Firestore
+
+    1. Make.com genera un nuovo documento nella collezione Firestore
+    2. Popola i campi mappati dai valori Monday.com
+    3. Restituisce l'ID del documento creato
+    4. Aggiorna Monday.com:
+       - Scrive `FirestoreId` con il nuovo ID
+       - Imposta `Ultimo Sync` con timestamp corrente
+  </Step>
+
+  <Step title="UPDATE - Se firestoreId è presente">
+    **Azione**: Aggiorna documento esistente
+
+    1. Make.com localizza il documento in Firestore usando `FirestoreId`
+    2. Confronta `Ultimo Sync` con data ultima modifica Monday.com
+    3. Se Monday è più recente:
+       - Aggiorna i campi del documento Firestore
+       - Aggiorna `Ultimo Sync` su Monday.com
+    4. Se Monday NON è più recente:
+       - Nessuna azione (dati già sincronizzati)
+  </Step>
+
+  <Step title="Gestione errori">
+    In caso di errore:
+    - Make.com registra il fallimento
+    - `Ultimo Sync` non viene aggiornato
+    - Notifica al responsabile IT (configurabile)
+  </Step>
+</Steps>
+
+### Forzare la Sincronizzazione
+
+<Warning>
+**Come forzare un aggiornamento**
+
+Se necessario sovrascrivere i dati in Firestore con quelli di Monday.com:
+
+1. Su Monday.com, **svuota il campo** `Ultimo Sync` dell'item
+2. Al prossimo avvio dello scenario, Make.com considererà il record "mai sincronizzato"
+3. I dati verranno aggiornati in Firestore indipendentemente dalla data di modifica
+
+**Usa questa funzione con cautela**: sovrascrive sempre Firestore con Monday.com
+</Warning>
+
+### Avvertenze Critiche
+
+<Note>
+**⚠️ Non cancellare `FirestoreId` senza eliminare il documento**
+
+Se cancelli `FirestoreId` da Monday.com senza eliminare il documento corrispondente in Firestore:
+- Al prossimo sync, Make.com creerà un NUOVO documento
+- Il documento originale diventa "orfano" (non più gestibile da Monday)
+- Si creano dati duplicati
+
+**Procedura corretta per eliminazione**:
+1. Elimina prima il documento da Firestore (manualmente o via script)
+2. Poi elimina l'item da Monday.com
+3. Oppure: archivia l'item Monday senza cancellare `FirestoreId`
+</Note>
+
+## Scenari Master Data
+
+Questi scenari sincronizzano le entità di configurazione che raramente cambiano ma devono essere coerenti tra sistemi.
+
+### 1. Sync Categorie Servizi
+
+<Accordion title="📊 Sync Categorie Servizi → service_categories">
+**Board Monday.com**: Categorie servizi (ID: 1179916747)
+**Collection Firestore**: `/service_categories`
+
+**Scopo**: Sincronizza le categorie di trattamenti e servizi (es. "Massaggi", "Estetica", "Fitness").
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Name | `name` | String | Nome categoria |
+| Color | `color` | String | Colore hex per UI |
+| FirestoreId | Document ID | String | ID documento |
+| Ultimo Sync | - | Timestamp | Tracking |
+
+**Frequenza**: On-demand o schedulato
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-categories)
+</Accordion>
+
+### 2. Sync Listini
+
+<Accordion title="💰 Sync Listini → accomodation_services">
+**Board Monday.com**: Listini (ID: 1175238188)
+**Collection Firestore**: `/accomodation_services`
+
+**Scopo**: Sincronizza i servizi specifici di ogni struttura con prezzi, durata e requisiti.
+
+**Particolarità**: Gestisce anche **subitems** per varianti servizio.
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Name | `name` | String | Nome servizio |
+| Price | `price` | Number | Prezzo in euro |
+| Duration | `duration` | Number | Durata minuti |
+| Qualifications | `qualifications` | Array | Qualifiche richieste |
+| Struttura | `accomodation` | Reference | Ref a `/accomodations` |
+| Category | `category` | Reference | Ref a `/service_categories` |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-accomodation-services)
+</Accordion>
+
+### 3. Sync Qualifiche Staff
+
+<Accordion title="🎓 Sync Qualifiche Staff → qualifications">
+**Board Monday.com**: Qualifiche staff (ID: 1185000060)
+**Collection Firestore**: `/qualifications`
+
+**Scopo**: Sincronizza le qualifiche professionali degli operatori (es. "Massoterapista", "Estetista certificata").
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Qualification | `qualification` | String | Descrizione qualifica |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand (raramente modificato)
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-qualifications)
+</Accordion>
+
+### 4. Sync Strutture
+
+<Accordion title="🏨 Sync Strutture → accomodations">
+**Board Monday.com**: Strutture (ID: 1175215598)
+**Collection Firestore**: `/accomodations`
+
+**Scopo**: Sincronizza le strutture BF Wellness (hotel, resort, SPA).
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Name | `name` | String | Nome struttura |
+| Address | `address` | String | Indirizzo completo |
+| Phone | `phone` | String | Recapiti |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand (configurazione iniziale)
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-accomodations)
+</Accordion>
+
+### 5. Sync Servizi/Trattamenti
+
+<Accordion title="💆 Sync Servizi → services">
+**Board Monday.com**: Trattamenti e prodotti (ID: 1175239733)
+**Collection Firestore**: `/services`
+
+**Scopo**: Sincronizza i servizi "generici" non legati a una struttura specifica.
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Name | `name` | String | Nome servizio |
+| Duration | `duration` | Number | Durata minuti |
+| Description IT/EN/ES | `description_it`, `_en`, `_es` | String | Multilingua |
+| Price | `price` | Number | Prezzo base |
+| Category | `category` | Reference | Ref a `/service_categories` |
+| Qualifications | `qualifications` | Array | Qualifiche richieste |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-services)
+</Accordion>
+
+## Scenari Gestione Staff
+
+Questi scenari sincronizzano i dati del personale e le loro assegnazioni alle strutture.
+
+### 6. Sync Workers
+
+<Accordion title="👥 Sync Workers → workers">
+**Board Monday.com**: Staff (ID: 1175246540)
+**Collection Firestore**: `/workers`
+
+**Scopo**: Sincronizza i profili dei lavoratori (operatori, receptionist, manager).
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Name | `name` | String | Nome completo |
+| Email | `email` | String | Email lavoratore |
+| Active | `active` | Boolean | Disponibilità |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand o webhook su modifica
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-workers)
+</Accordion>
+
+### 7. Sync Incarichi Staff
+
+<Accordion title="📋 Sync Incarichi Staff → accomodation_workers">
+**Board Monday.com**: Incarichi staff (ID: 1180066886)
+**Collection Firestore**: `/accomodation_workers`
+
+**Scopo**: Collega lavoratori a strutture specifiche con date di validità.
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Worker | `worker` | Reference | Ref a `/workers` |
+| Accomodation | `accomodation` | Reference | Ref a `/accomodations` |
+| Start Date | `startDate` | Date | Inizio incarico |
+| End Date | `endDate` | Date | Fine incarico |
+| Active | `active` | Boolean | Incarico attivo |
+| FirestoreId | Document ID | String | ID documento |
+
+**Frequenza**: On-demand o webhook
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-accomodation-workers)
+</Accordion>
+
+### 8. Sync Utenti App
+
+<Accordion title="🔐 Sync Utenti App → users">
+**Board Monday.com**: Utenti App BF (ID: 1175249523)
+**Collection Firestore**: `/users`
+
+**Scopo**: Sincronizza gli utenti dell'app staff con Firebase Authentication.
+
+**Particolarità**:
+- Filtra solo utenti con tag "Personale BF"
+- **Crea utente** in Firebase Auth se non esiste
+- Chiama HTTP Cloud Function `create-firebase-user`
+
+**Campi mappati**:
+| Colonna Monday | Campo Firestore | Tipo | Note |
+|---------------|-----------------|------|------|
+| Email | `email` | String | Email login |
+| Password | - | String | Solo per creazione Auth |
+| Role | `role` | String | Ruolo (admin/staff) |
+| FirestoreId | `uid` | String | UID Firebase Auth |
+
+**Flusso creazione**:
+1. Make.com chiama `create-firebase-user(email, password)`
+2. Function crea utente in Firebase Auth
+3. Function restituisce `uid` e `success: true`
+4. Make.com scrive documento in `/users/<uid>`
+5. Aggiorna Monday.com con `FirestoreId = uid`
+
+**Frequenza**: On-demand o webhook
+
+[Dettagli tecnici →](/api-reference/integrations/make#sync-users)
+</Accordion>
+
+## Scenari Operativi Aggiuntivi
+
+<AccordionGroup>
+  <Accordion title="Lead dal sito → Board Anagrafiche">
+    **Trigger**: Webhook dal form JotForm (pagina [Lavora con noi](https://bfwellness.it/jobs/))
+
+    **Azione**:
+    - Make.com riceve dati candidatura
+    - Crea item nella board Monday "Candidature"
+    - Notifica team HR
+
+    **Status**: Attivo
+  </Accordion>
+
+  <Accordion title="Sync Prenotazioni ↔ Firestore">
+    **Board Monday**: Prenotazioni
+    **Collection**: `/appointments`
+
+    **Status**: Da verificare implementazione
+
+    **Nota**: Le prenotazioni sono principalmente gestite direttamente dall'app staff verso Firestore. Verificare se esiste sincronizzazione inversa verso Monday.com.
+  </Accordion>
+
+  <Accordion title="Aggiornamenti WordPress → Monday">
+    **Trigger**: Webhook WordPress su pubblicazione pagina
+
+    **Azione**:
+    - Aggiorna board Marketing su Monday.com
+    - Notifica team via Slack/email
+
+    **Status**: Attivo
+  </Accordion>
+
+  <Accordion title="Pipeline documenti firmati">
+    **Board Monday**: Firma documenti + Sotto elementi
+
+    **Azione**:
+    - Quando subitem passa a "Firmato"
+    - Archivia documento su storage
+    - Notifica responsabile
+
+    **Status**: Attivo
+  </Accordion>
+</AccordionGroup>
+
+## Tabella Mapping Completa
+
+Riepilogo di tutte le sincronizzazioni attive:
+
+| Board Monday (ID) | Collection Firestore | Campi Sync | Frequenza | Status |
+|------------------|---------------------|-----------|-----------|--------|
+| **Master Data** | | | | |
+| Categorie servizi (1179916747) | `service_categories` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Listini (1175238188) | `accomodation_services` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Qualifiche staff (1185000060) | `qualifications` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Strutture (1175215598) | `accomodations` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Trattamenti e prodotti (1175239733) | `services` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| **Staff** | | | | |
+| Staff (1175246540) | `workers` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Incarichi staff (1180066886) | `accomodation_workers` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| Utenti App BF (1175249523) | `users` | ✅ FirestoreId, Ultimo Sync | On-demand | ✅ Attivo |
+| **Dati Transazionali** | | | | |
+| Prenotazioni | `appointments` | ❌ Non sincronizzato | - | ⚠️ Gestito da app |
+| Anagrafiche | `clients` | ❌ Non sincronizzato | - | ⚠️ Gestito da app |
+| Registro vendite | `sales` | ❌ Non sincronizzato | - | ⚠️ Gestito da app |
+
+**Collezioni non mappate** (gestite direttamente da app):
+- `payments` - Pagamenti registrati dall'app staff
+- `training_videos` - Video formativi caricati manualmente
+- `currentWorkersAccomodation` - Snapshot stato corrente operatori
+- `ff_push_notifications` - Notifiche push Firebase
+
+## Best Practices
+
+<Checklist>
+  <ChecklistItem>**Non cancellare mai** `FirestoreId` da Monday.com senza eliminare il documento Firestore</ChecklistItem>
+  <ChecklistItem>Per forzare sync, **svuota** `Ultimo Sync` invece di modificare `FirestoreId`</ChecklistItem>
+  <ChecklistItem>Verifica sempre **log Make.com** dopo modifiche importanti</ChecklistItem>
+  <ChecklistItem>Usa **modalità test** (duplica scenario) prima di modificare produzione</ChecklistItem>
+  <ChecklistItem>Documenta ogni modifica su Monday.com board "Automazioni"</ChecklistItem>
+  <ChecklistItem>Mantieni allineati i **nomi campi** tra Monday e Firestore</ChecklistItem>
+</Checklist>
+
+## Accesso e Sicurezza
+
+- **Account Make.com**: Gestito dal Responsabile IT BF Wellness
+- **Credenziali API**: Salvate nelle connessioni Make.com (non esportare)
+- **Rotazione chiavi**:
+  1. Aggiorna connessione in Make.com
+  2. Documenta rotazione su Monday.com
+  3. Testa manualmente ogni scenario
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="❌ FirestoreId mancante dopo creazione">
+    **Problema**: Item creato su Monday ma `FirestoreId` rimane vuoto
+
+    **Possibili cause**:
+    - Errore nella chiamata Firestore
+    - Permessi insufficienti Firebase
+    - Timeout Make.com
+
+    **Soluzione**:
+    1. Controlla log Make.com per errori
+    2. Verifica permessi Firebase Service Account
+    3. Rilancia scenario manualmente
+    4. Se necessario, svuota `Ultimo Sync` per retry
+  </Accordion>
+
+  <Accordion title="⏰ Ultimo Sync non si aggiorna">
+    **Problema**: Modifiche su Monday ma `Ultimo Sync` rimane vecchio
+
+    **Possibili cause**:
+    - Scenario Make.com non in esecuzione
+    - Errore durante update Firestore
+    - Campo `Ultimo Sync` protetto/locked
+
+    **Soluzione**:
+    1. Verifica stato scenario (attivo/pausato)
+    2. Controlla log per errori update
+    3. Verifica permessi colonna Monday.com
+    4. Rilancia scenario manualmente
+  </Accordion>
+
+  <Accordion title="🔄 Dati duplicati in Firestore">
+    **Problema**: Stesso record duplicato con ID diversi
+
+    **Causa**: `FirestoreId` cancellato da Monday → nuovo documento creato
+
+    **Soluzione**:
+    1. Identifica il documento "corretto" in Firestore
+    2. Aggiorna Monday con `FirestoreId` corretto
+    3. Elimina documenti duplicati da Firestore
+    4. Non cancellare mai `FirestoreId` in futuro
+  </Accordion>
+
+  <Accordion title="⚠️ Discrepanze dati Monday ↔ Firestore">
+    **Problema**: Dati diversi tra Monday.com e Firestore
+
+    **Causa**: Sincronizzazione fallita o modifiche manuali Firestore
+
+    **Soluzione**:
+    1. Identifica "source of truth" (di solito Monday per master data)
+    2. Svuota `Ultimo Sync` su Monday per forzare sync
+    3. Rilancia scenario Make.com
+    4. Verifica allineamento post-sync
+  </Accordion>
+</AccordionGroup>
+
+## Monitoraggio
+
+<Note>
+**Strumenti di monitoraggio consigliati**:
+- Dashboard Make.com → Execution History
+- Monday.com board "Automazioni" → Log modifiche scenari
+- Firebase Console → Firestore → Audit logs
+- Notifiche email/Slack su errori critici
+
+**KPI da monitorare**:
+- Numero sync giornaliere per scenario
+- Percentuale successo/fallimento
+- Tempo medio esecuzione
+- Errori ricorrenti
+</Note>
+
+## Link Utili
+
+- 📖 **[Documentazione tecnica completa](/api-reference/integrations/make)** - Blueprint dettagliati scenari
+- 🔗 **[Make.com Dashboard](https://www.make.com/)** - Accesso piattaforma
+- 📊 **[Monday.com Boards](/bf/monday)** - Documentazione board
+- 🗄️ **[Data Model Firestore](/bf/data-model)** - Struttura database
+- 🏢 **[GitHub BF Wellness](https://github.com/bfwellness)** - Repositories
+  - `docs` - Documentazione
+  - `bf-spa` - App ospiti
+  - `bf-wellness` - App staff
+
+---
+
+**Per dettagli tecnici completi, configurazioni blueprint e mapping avanzati**, consulta la [documentazione tecnica Make.com](/api-reference/integrations/make).

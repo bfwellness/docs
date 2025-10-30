@@ -1,0 +1,44 @@
+# Listini
+
+<Callout type="info">
+Board ID: `1175238188` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Gestione listini per struttura con periodi di validità.
+- I subitems contengono le voci con prezzo/durata specifici.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Gestione listini | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Inzio validità | `date` | — |
+| Fine validità | `date` | — |
+| Struttura | `board_relation` | Relazione con: Strutture |
+| Sotto elementi | `subtasks` | Subitems gestiti dalla board: Sotto elementi di Listini |
+| Listino PDF | `file` | — |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+
+## Uso operativo
+
+- Creare un item per ogni listino attivo (es. stagione estiva).
+- Caricare PDF ufficiale e aggiornare subitems con prezzi personalizzati.
+- Relazione `Struttura` definisce la sede a cui applicare il listino.
+
+## Integrazioni e relazioni
+
+- Subitems collegati a `Sotto elementi di Listini` riflettono i trattamenti del catalogo.
+- Automazione Make esporta listini verso Firestore per l'app ospiti.
+
+## Checklist di manutenzione
+
+- Impostare data fine e disattivare listini scaduti.
+- Verificare coerenza prezzi vs board `Trattamenti e prodotti`.

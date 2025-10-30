@@ -1,0 +1,25 @@
+# Annullare una Prenotazione
+
+Cancellare una prenotazione.
+
+## Process
+
+1. Open booking details
+2. Tap "Cancel"
+3. Select cancellation reason
+4. Confirm
+
+## Implementation
+
+**Screen**: `BookingCancelWidget`
+
+**Firestore Update**:
+```dart
+await appointmentRef.update({
+  'canceled': true,
+  'cancellationReason': reason,
+  'canceledBy': currentUserUid,
+});
+```
+
+[Complete guide TBD]

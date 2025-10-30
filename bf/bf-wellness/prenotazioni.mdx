@@ -1,0 +1,118 @@
+# Gestione prenotazioni (BF Wellness Staff)
+
+Il modulo prenotazioni è il cuore operativo per lo staff. Il flusso multi-step permette di creare, modificare e monitorare appuntamenti, aggiornando in tempo reale la collezione `appointments` descritta nel [modello dati](../data-model#firestore).
+
+## Panoramica del flusso
+
+<Steps>
+  <Step title="Selezione servizio" href="#selezione-servizio">
+    `booking_service_selection_widget` – filtra categorie, servizi e pacchetti.
+  </Step>
+  <Step title="Selezione operatori" href="#selezione-operatori">
+    `booking_operators_selection_widget` – trova operatori compatibili e slot liberi.
+  </Step>
+  <Step title="Data e ora" href="#selezione-data-e-ora">
+    `booking_date_selection_widget` – calendario + generazione slot.
+  </Step>
+  <Step title="Cliente" href="#selezione-cliente">
+    `booking_client_selection_widget` – ricerca Algolia + creazione rapida.
+  </Step>
+  <Step title="Conferma" href="#conferma-e-scrittura">
+    `booking_confirm_widget` – riepilogo e salvataggio Firestore.
+  </Step>
+</Steps>
+
+Ogni step riceve in input le scelte precedenti (via parametri `GoRouter`) e prepara i dati necessari per generare il documento `AppointmentsRecord`.
+
+## Selezione servizio
+
+<Callout type="info">
+Widget chiave: `BookingServiceSelectionWidget`.  
+Componenti principali:
+</Callout>
+
+- `ServicesListWidget` → categorie (`ServiceCategoriesRecord`) + servizi prenotabili (`calendarReservations == 1`).  
+- `PackagesListWidget` → pacchetti (`ProductsRecord`) per bundle di trattamenti.  
+- Filtri personalizzati (durata, prezzo, preferiti) salvati in `FFAppState`.
+- Output: `AccomodationServicesRecord` serializzato (va a riempire `serviceData`).
+
+## Selezione operatori
+
+<AccordionGroup>
+  <Accordion title="Filtri e dati in ingresso">
+    - Input: `service`, `client`, `currentReservation`, lista appuntamenti esistenti.  
+    - Query `WorkersRecord` filtra per `qualifications` richieste dal servizio.  
+    - Possibilità di valorizzare un operatore preferito passato dal passo precedente.
+  </Accordion>
+  <Accordion title="Logica disponibilità">
+    - `generateWorkerAvailableTimeSlots()` considera appuntamenti già presenti, buffer e orario corrente.  
+    - Restituisce slot formattati (`HH:mm`) e flagged se occupati.  
+    - Il model mantiene la scelta in `_model.worker` per riprese successive.
+  </Accordion>
+</AccordionGroup>
+
+## Selezione data e ora
+
+- `BookingDateSelectionWidget` sfrutta `FlutterFlowCalendar` + radio button orari.  
+- Slot calcolati con `generateAvailableTimeSlots()` (considera worker, durata, buffer, orario corrente).  
+- `_assignStartHour()` previene disponibilità nel passato.  
+- I valori scelti sono salvati in `_model.selectedDate/_model.selectedTime` e passati al passo successivo.
+
+## Selezione cliente
+
+- **Widget**: `BookingClientSelectionWidget`.
+- **Ricerca**:
+  - Input collegato all’indice Algolia dei clienti via `ClientsRecord.search`.
+  - In mancanza di risultati, è possibile aprire il flusso di creazione rapida (`clients/client_create/client_create_widget.dart`).
+- **Dati denormalizzati**:
+  - Alla conferma, viene creato un `ClientDataStruct` (nome, cognome, email, numero camera) per snapshot nel documento appuntamento.
+
+## Conferma e scrittura
+
+- **Widget**: `BookingConfirmWidget`.
+- **Preview**:
+  - Mostra riepilogo di servizio, operatori, data, durata, prezzo e note.
+- **Persistenza**:
+  - Chiama `AppointmentsRecord.collection.doc().set()` con payload costruito da `createAppointmentsRecordData()` (`lib/backend/schema/appointments_record.dart:121`).
+  - Aggiorna `clientData`, `serviceData`, `workersData` sfruttando helper `addClientDataStructData` e `addServiceDataStructData`.
+- **Post-salvataggio**:
+  - Naviga verso `Bookings_agenda` o `Booking_details` a seconda del contesto.
+
+## Agenda e lista prenotazioni
+
+<Tabs>
+  <Tab title="Agenda settimanale">
+    - Widget: `BookingsAgendaWidget`.  
+    - Segmenta mattina/pomeriggio, supporta drag & drop per riprogrammare.  
+    - Custom actions:  
+      - `extractAppointmentFromJson` → converte risultati Firestore.  
+      - `generate_day_time_slot` → crea placeholder per slot vuoti.  
+    - Aggiornamento Firestore: modifica `startDate`, `endDate`, `workers`.
+  </Tab>
+  <Tab title="Lista prenotazioni">
+    - Widget: `BookingsListWidget`.  
+    - Filtri: data range, stato (`canceled`), operatore, struttura.  
+    - Export CSV disponibile (se configurato in FlutterFlow).  
+    - Ideale per riconciliazione amministrativa e controlli storici.
+  </Tab>
+</Tabs>
+
+## Modifiche successive
+
+- **Dettaglio**: `BookingDetailsWidget` mostra timeline, allegati e collegamenti a pagamenti/vendite legati all’appuntamento (`payments` e `sales` con `appointment` o `appointmentData`).
+- **Riprogrammazione**:
+  - `booking_reschedule_operators_selection` e `booking_reschedule_date_selection` riutilizzano la stessa logica dei passi 2-3 per aggiornare `appointments`.
+- **Cancellazione**: `booking_cancel/booking_cancel_widget.dart` imposta `canceled = true`, `cancellationReason` e `canceledBy` (email utente corrente).
+
+## Collegamenti al database
+
+- Ogni appuntamento scrive su `appointments` (vedi campi in [Modello dati](../data-model#firestore)).
+- I service snapshot sono mappati da `AccomodationServicesRecord` in `serviceData` (gestione prezzi/durata).
+- Gli operatori assegnati popolano `workers` (DocumentReference) e `workersData` (struct annessa, utile all’app ospite `bf-spa`).
+- Le riprogrammazioni aggiornano `startDate` / `endDate` mantenendo `created_time` originale per audit trail.
+
+## Best practice
+
+- Aggiornare `AccomodationServicesRecord.calendarReservations` quando si vuole escludere un servizio dal planner.
+- Verificare gli indici Firestore (`firebase/firestore.indexes.json`) se si introducono nuovi filtri combinati (es. per worker + range date).
+- Se Monday.com contiene pianificazioni operatori, sincronizzare manualmente eventuali modifiche straordinarie per evitare doppie prenotazioni.

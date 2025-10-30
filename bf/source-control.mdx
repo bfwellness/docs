@@ -1,0 +1,48 @@
+# Sorgente e versioning (GitHub)
+
+Il codice delle applicazioni BF Wellness viene mantenuto in repository privati su **GitHub**. Questa pagina descrive le convenzioni operative e i riferimenti per il team tecnico.
+
+## Repository
+
+- `bf-wellness` – contiene l’app staff Flutter, la documentazione Mintlify e gli asset condivisi.
+- `bf-spa` – repository dedicato all’app ospiti quando gestito separatamente (in questa monorepo vive sotto `apps/bf-spa`).
+- Eventuali servizi di supporto (Cloud Functions, script di import/export) sono organizzati in cartelle dedicate all’interno della stessa monorepo.
+
+> ℹ️ L’accesso ai repository è gestito dal **Responsabile IT BF Wellness**, che abilita gli utenti GitHub Enterprise e assegna i permessi (read / write / admin) in base al ruolo.
+
+## Branching e release
+
+- **`develop`** – ramo principale di integrazione continua; ogni feature confluisce tramite Pull Request.
+- **Feature branch** – seguono la convenzione `feature/<descrizione-breve>` o `fix/<descrizione>`.
+- **Release tag** – creati in formato `app-name/vX.Y.Z` per mantenere storicità.
+- Pull Request obbligatori con:
+  - Revisione di almeno un altro membro del team.
+  - Link all’item Monday corrispondente.
+  - Checklist di test (lint, build, funzionali) completata nel template PR.
+
+## Gestione delle credenziali
+
+- Nessuna chiave o segreto deve essere commitato nel repository. Utilizzare:
+  - `.env` localizzati (non versionati) per chiavi API.
+  - Secret GitHub (Actions) o variabili Firebase per deployment automatizzati.
+- Le credenziali master (SiteGround, Stripe, Algolia) sono custodite dal Responsabile IT e condivise solo tramite canali sicuri.
+- Nel caso di chiavi temporanee (es. per QA), utilizzare GitHub Environments con scadenza programmata.
+
+## Continuous Integration / Delivery
+
+- Pipeline GitHub Actions (quando abilitate) eseguono:
+  - `flutter pub get` + build di verifica per entrambe le app.
+  - Linting (`flutter analyze`, `flutter test`).
+  - Deploy automatico documentazione (opzionale) su branch `main`.
+- Ogni pipeline deve notificare l’esito nel board Monday corrispondente (via integrazione o commento manuale).
+
+## Coordinamento con la documentazione
+
+- Ogni modifica significativa al codice deve essere riflessa nella documentazione Mintlify (questa repository). Utilizzare la checklist `Aggiorna documentazione` nei template PR.
+- Collegare nelle descrizioni PR i percorsi aggiornati (es. `docs/bf/bf-wellness/prenotazioni.mdx`) per facilitare la revisione.
+
+## Accesso emergenziale
+
+- In caso di necessità (incidenti, hotfix critici) il Responsabile IT può concedere accesso temporaneo con privilegi elevati. Tali accessi devono essere revocati appena concluso l’intervento e documentati nel board Monday “Operations & Support”.
+
+> 📌 Tenere aggiornata questa pagina quando cambiano convenzioni Git, processi di release o strumenti di automazione.

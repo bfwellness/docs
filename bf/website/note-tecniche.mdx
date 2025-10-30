@@ -1,0 +1,47 @@
+Questa sezione approfondisce la configurazione WordPress/SiteGround, gli accessi e i componenti tecnici da monitorare.
+
+## Architettura WordPress
+
+- Installazione gestita con SiteGround Site Tools (WordPress Toolkit).  
+- Tema personalizzato basato su Elementor + template brand BF Wellness.  
+- Database MySQL (credenziali salvate in `wp-config.php` e custodite dal responsabile IT).
+
+<AccordionGroup>
+  <Accordion title="Struttura contenuti">
+    - Home: hero, servizi, call-to-action, testimonianze.  
+    - Pagine struttura: gallery, servizi dedicati, modulo contatto.  
+    - Sezioni future: blog/news, area download.
+  </Accordion>
+  <Accordion title="Plugin critici (in aggiornamento)">
+    - Elementor Pro (builder).  
+    - SG Optimizer (cache/CDN).  
+    - Plugin form contatti con hook verso Make.com.  
+    - Plugin SEO (es. Yoast).  
+    - <em>TODO:</em> completare elenco con versioni e policy di update.
+  </Accordion>
+</AccordionGroup>
+
+## Accesso e credenziali
+
+<Card title="Gestione accessi" icon="key">
+  - SiteGround Site Tools: account amministrativi gestiti dal Responsabile IT.  
+  - WordPress admin: creare utenti nominativi (no credenziali condivise).  
+  - FTP/SFTP: credenziali generate on-demand, condivise tramite canali sicuri.  
+  - Accesso DB (phpMyAdmin): fornito temporaneamente dal Responsabile IT per interventi mirati.
+</Card>
+
+## Sicurezza
+
+- Abilitare 2FA sugli account WordPress amministrativi (plugin consigliato).  
+- Limitare tentativi di login (plugin dedicato o funzionalità SG).  
+- Monitorare log accessi e file changes tramite SiteGround Security.  
+- Pianificare vulnerability scan trimestrale.
+
+## Collegamenti utili
+
+<Checklist>
+  <ChecklistItem><strong>Site Tools:</strong> https://tools.siteground.com/</ChecklistItem>
+  <ChecklistItem><strong>WordPress admin:</strong> https://bfwellness.it/wp-admin</ChecklistItem>
+  <ChecklistItem><strong>Documentazione Make:</strong> [Automazioni Make.com](../make)</ChecklistItem>
+  <ChecklistItem><strong>Processi Marketing:</strong> [Gestionale Monday.com](../monday)</ChecklistItem>
+</Checklist>

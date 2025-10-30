@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "BF Wellness Docs",
+  "colors": {
+    "primary": "#884A39",
+    "light": "#F9E0BB",
+    "dark": "#C38154"
+  },
+  "favicon": "/favicon.png",
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentazione",
+        "groups": [
+          {
+            "group": "Panoramica",
+            "pages": [
+              "bf/overview",
+              "bf/data-model"
+            ]
+          },
+          {
+            "group": "Linee Guida",
+            "pages": [
+              "bf/componenti-flutter",
+              "bf/operativita",
+              "bf/source-control"
+            ]
+          },
+          {
+            "group": "BF Spa Ospiti",
+            "pages": [
+              "bf/bf-spa/overview",
+              "bf/bf-spa/architettura"
+            ]
+          },
+          {
+            "group": "Sito Web & Siteground",
+            "pages": [
+              "bf/website/index",
+              "bf/website/overview",
+              "bf/website/operativita",
+              "bf/website/note-tecniche"
+            ]
+          },
+          {
+            "group": "Asset Digitali",
+            "pages": [
+              "bf/monday",
+              "bf/make"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Firebase Console",
+          "icon": "fire",
+          "href": "https://console.firebase.google.com"
+        },
+        {
+          "anchor": "FlutterFlow",
+          "icon": "mobile",
+          "href": "https://app.flutterflow.io"
+        },
+        {
+          "anchor": "Monday.com",
+          "icon": "calendar",
+          "href": "https://bf-wellness.monday.com/"
+        },
+        {
+          "anchor": "Make.com",
+          "icon": "diagram-project",
+          "href": "https://www.make.com/"
+        },
+        {
+          "anchor": "GitHub BF Wellness",
+          "icon": "github",
+          "href": "https://github.com/bfwellness"
+        },
+        {
+          "anchor": "SiteGround",
+          "icon": "server",
+          "href": "https://tools.siteground.com/"
+        },
+        {
+          "anchor": "JotForm",
+          "icon": "clipboard-list",
+          "href": "https://www.jotform.com/"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": []
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {}
+}

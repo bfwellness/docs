@@ -1,0 +1,45 @@
+# Integrazione Stripe
+
+**App**: bf-spa only
+
+## Architecture
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant CF as Cloud Functions
+    participant Stripe
+
+    App->>CF: initStripePayment(amount)
+    CF->>Stripe: Create payment intent
+    Stripe-->>CF: Client secret
+    CF-->>App: Return secret
+    App->>Stripe: Confirm payment (SDK)
+    Stripe-->>App: Success
+    App->>CF: Record in Firestore
+```
+
+## Cloud Function
+
+[Details →](/api-reference/cloud-functions#initstripepayment)
+
+## Flutter Implementation
+
+```dart
+// Call Cloud Function
+final callable = FirebaseFunctions.instance
+  .httpsCallable('initStripePayment');
+final result = await callable.call({'amount': 10000});
+
+// Use Stripe SDK
+await Stripe.instance.initPaymentSheet(
+  paymentSheetParameters: SetupPaymentSheetParameters(
+    paymentIntentClientSecret: result.data['clientSecret'],
+    merchantDisplayName: 'BF Wellness',
+  ),
+);
+
+await Stripe.instance.presentPaymentSheet();
+```
+
+[Complete setup guide TBD]

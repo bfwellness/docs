@@ -1,0 +1,23 @@
+# Ricerca Clienti
+
+Ricerca clienti via Algolia.
+
+## Implementation
+
+```dart
+final results = await FFAlgoliaManager.instance
+  .algoliaQuery(
+    index: 'clients',
+    queryText: searchQuery,
+  )
+  .getResponse();
+```
+
+## Searchable Fields
+
+- Name
+- Surname
+- Email
+- Phone number
+
+[Setup guide →](/guides/algolia-search)

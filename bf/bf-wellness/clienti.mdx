@@ -1,0 +1,82 @@
+# Gestione clienti (BF Wellness Staff)
+
+Il modulo clienti fornisce allo staff un CRM leggero sincronizzato con Firestore. Questa pagina illustra le schermate, le query Algolia/Firestore e i legami con pagamenti e prenotazioni.
+
+## Elenco clienti
+
+<Columns cols={2}>
+  <Card title="Ricerca & dataset" icon="search">
+    - `clients_widget.dart` con input debounce (`EasyDebounce`).  
+    - Ricerca Algolia (`ClientsRecord.search`).  
+    - Stream `ClientsRecord` ordinato per `created_time`.  
+    - Totali `paid/toPay` formattati con `formatNumber`.
+  </Card>
+  <Card title="Azioni rapide" icon="flash">
+    - CTA “Nuovo cliente” → `client_create_widget`.  
+    - Shortcut prenotazione (`Booking_service_selection`).  
+    - Shortcut incasso (`payments/payment_create`).  
+    - Possibilità di aprire direttamente la scheda cliente.
+  </Card>
+</Columns>
+
+## Creazione e modifica
+
+- **Creazione**: `lib/screens/clients/client_create/client_create_widget.dart`.
+  - Valida campi obbligatori (nome, cognome, email).
+  - Imposta `created_time` e `created_by` (utente corrente, `currentUserReference`).
+- **Modifica**: `client_edit/client_edit_widget.dart` aggiorna i campi principali e sincronizza eventuali modifiche su `ClientsRecord`.
+- **Campi chiave**: vedi tabella `clients` in [Modello dati](../data-model#firestore).
+
+## Scheda cliente
+
+<Tabs>
+  <Tab title="Overview">
+    - Widget `client_details_widget`.  
+    - Hero con avatar, info soggiorno (`start_of_stay`, `end_of_stay`), note.  
+    - Animazioni `flutter_animate` per ingresso graduale.
+  </Tab>
+  <Tab title="Prenotazioni">
+    - Tab dedicata con cronologia (`AppointmentDataStruct`).  
+    - Pulsanti rapidi per riprogrammare o aprire dettagli.
+  </Tab>
+  <Tab title="Pagamenti & vendite">
+    - Sezioni alimentate da `PaymentsRecord` e `SalesRecord`.  
+    - Snapshot denormalizzati (`ClientDataStruct`, `ProductDataStruct`) garantiscono storicità.
+  </Tab>
+  <Tab title="Azioni rapide">
+    - Incassa pagamento, crea prenotazione, aggiorna dati, invia email.  
+    - Consigliato registrare note operative in Monday direttamente dalla scheda.
+  </Tab>
+</Tabs>
+
+## Pagamenti e vendite per cliente
+
+<AccordionGroup>
+  <Accordion title="Pagamenti">
+    - `client_payments_widget` → Stream `PaymentsRecord` filtrato per cliente.  
+    - Mostra importo, metodo (`PaymentMethods`), stato.  
+    - Pulsante “Ricevuta” apre `payment_confirm` per stampa/recap.
+  </Accordion>
+  <Accordion title="Vendite">
+    - `client_sales_widget` → Query `SalesRecord` per cliente.  
+    - Dettaglia items acquistati (`SaleItemsStruct`).  
+    - Collegamenti ai prodotti (`ProductsRecord`) e alle prenotazioni generate.
+  </Accordion>
+</AccordionGroup>
+
+## Storico legacy
+
+- `clients_old/clients_old_widget.dart` presenta clienti importati da sistemi precedenti.
+- Funziona su una collezione separata (`clients_old`), utile per consultazione ma non per nuove prenotazioni.
+
+## Integrazione con il resto dell’ecosistema
+
+- **Prenotazioni**: quando si conferma una prenotazione, un snapshot di `ClientsRecord` viene salvato in `AppointmentsRecord.clientData`. Qualsiasi aggiornamento anagrafico importante dovrebbe portare a verificare eventuali appuntamenti a breve (per informare l’ospite).
+- **Pagamenti**: i campi aggregati `paid` e `toPay` devono essere mantenuti coerenti con le registrazioni in `payments`. Il widget home “Da incassare” sommatoria `toPay` (vedi [Dashboard](dashboard)).
+- **Monday.com**: ogni scheda cliente può essere collegata a board operativi (per esempio “Richieste cliente”) annotando l’ID documento (`clients/{id}`) nella card Monday.
+
+## Best practice
+
+- Utilizzare sempre la ricerca Algolia per evitare duplicati (combina nome + email).
+- Aggiornare `room_number` e `start_of_stay`/`end_of_stay` prima di creare prenotazioni durante il soggiorno.
+- Per cancellazioni da parte del cliente, documentare la motivazione nel board Monday e aggiornare eventuali note cliente (`ClientsRecord.notes`).

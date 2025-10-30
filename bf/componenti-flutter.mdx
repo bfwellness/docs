@@ -1,0 +1,101 @@
+# Struttura dei componenti Flutter
+
+Le due applicazioni condividono la stessa organizzazione del codice generato da FlutterFlow. Comprendere questa struttura è fondamentale per intervenire in sicurezza e mantenere la possibilità di riesportare il progetto da FlutterFlow senza conflitti.
+
+## Struttura delle cartelle principali
+
+| Cartella | Contenuto | Note operative |
+| --- | --- | --- |
+| `lib/main.dart` | Bootstrap dell’app, inizializzazione Firebase, tema e router (`GoRouter`). | Evitare modifiche invasive; le personalizzazioni globali vanno aggiunte tramite funzioni o provider dedicati. |
+| `lib/screens/**` | Schermate dell’app (una cartella per sezione). Ogni cartella contiene coppie `<nome>_widget.dart` e `<nome>_model.dart`. | Le classi `Model` estendono `FlutterFlowModel` e gestiscono stato, controller e dependency injection di componenti nidificati. |
+| `lib/components/**` | Widget riutilizzabili (navbar, card, liste). Ogni componente ha la sua coppia widget/model, come le schermate. | Preferire questi componenti per UI condivisa. |
+| `lib/flutter_flow/**` | Framework generato da FlutterFlow: tema, icone, animazioni, utilità, gestione stati globali (`FFAppState`), internazionalizzazione e router. | Non rinominare file. Le modifiche qui impattano l’intero progetto. |
+| `lib/backend/**` | Client Firestore (record, struct, query helper), integrazione Algolia, storage e configurazioni Firebase. | Qualsiasi nuova collezione deve essere definita qui. |
+| `lib/auth/**` | Helper di autenticazione (Firebase Auth + provider social). | Condiviso tra le app. |
+| `lib/custom_code/**` | Spazio sicuro per logica personalizzata: azioni, funzioni, widget. | FlutterFlow non sovrascrive questa cartella. Usarla per estensioni non supportate dal builder. |
+| `lib/app_state.dart` | Stato globale persistito (SharedPreferences). | Contiene flag come `firstLogin`, `currentLocation`, `currentNavIndex`. |
+
+## Pattern standard dei widget
+
+Ogni schermata o componente segue lo schema:
+
+```dart
+class ExampleWidget extends StatefulWidget { ... }
+
+class _ExampleWidgetState extends State<ExampleWidget> {
+  late ExampleModel _model;
+
+  @override
+  void initState() {
+    super.initState();
+    _model = createModel(context, () => ExampleModel());
+    // init logic
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Title(
+      title: 'Example',
+      child: Scaffold(
+        body: ...
+```
+
+e il relativo modello:
+
+```dart
+class ExampleModel extends FlutterFlowModel<ExampleWidget> {
+  // Controller, state e sub-model
+  late TextEditingController? textController;
+  late SubComponentModel subComponentModel;
+
+  @override
+  void initState(BuildContext context) {
+    subComponentModel = createModel(context, () => SubComponentModel());
+  }
+
+  @override
+  void dispose() {
+    textController?.dispose();
+    subComponentModel.dispose();
+  }
+}
+```
+
+### Concetti da conoscere
+
+- `wrapWithModel` / `createModel` gestiscono il ciclo di vita dei componenti nidificati, evitando memory leak.
+- `FFAppState` è un singleton (`ChangeNotifier`) salvato su `SharedPreferences`. Usare `FFAppState().update(() { ... })` per mutare valori globali.
+- La navigazione è orchestrata da `GoRouter` con rotte generate in `lib/flutter_flow/nav`. Gli export delle schermate si trovano in `lib/index.dart`.
+- Le traduzioni risiedono in `flutter_flow/internationalization.dart`; ogni testo è referenziato tramite `FFLocalizations.of(context).getText('chiave')`.
+
+## Convenzioni di modifica
+
+1. **Prima FlutterFlow, poi il codice** – quando possibile creare nuove schermate/azioni dal builder, esportare e solo dopo intervenire nel codice per refinements.
+2. **Logica custom** – posizionare funzioni in `flutter_flow/custom_functions.dart` o azioni in `custom_code/actions` per mantenerle dopo un re-export.
+3. **UI riutilizzabile** – preferire i componenti in `lib/components`. Per nuovi widget generali creare una cartella dedicata con coppia model/widget.
+4. **Temi e palette** – utilizzare `FlutterFlowTheme` (supporto dark/light) invece di colori hard-coded.
+5. **Responsive** – sfruttare `responsiveVisibility` generato da FlutterFlow per controllare la visibilità su web/mobile.
+6. **Gestione stato locale** – utilizzare i `Model` per controller e sub-componenti; ricorrere a Provider/riverpod solo se necessario (non presente attualmente).
+
+## Componenti chiave esistenti
+
+- `components/top_nav_bar_widget.dart` – barra superiore con avatar utente, selettore lingua e azioni contestuali.
+- `components/side_nav/side_nav_bar_widget.dart` – navigazione sinistra per layout desktop, sincronizzata con `FFAppState.currentNavIndex`.
+- `components/services_list` e `components/packages_list` – liste riutilizzabili di trattamenti/prodotti con filtri e CTA.
+- `components/empty_*` – componenti placeholder da usare quando le collezioni sono vuote (prenotazioni, pagamenti).
+- `components/lang_selector` – menù per cambiare lingua con `FFLocalizations`.
+
+## Integrazioni esterne nei widget
+
+- **Firebase/Firestore**: query tramite `StreamBuilder` e helper generati (`queryAppointmentsRecord`, `AppointmentsRecord.getDocumentOnce`).
+- **Algolia**: ricerche nella schermata `search` e nelle liste clienti (`ClientsRecord.search`).
+- **Google Maps e Places**: componenti in `location_map`, `location_search` e `flutter_flow/flutter_flow_google_map.dart`.
+- **Stripe** (solo BF Spa): invoca le callable functions attraverso `firebase_functions` package (logica generata in `custom_code/actions` quando necessario).
+
+## Aggiungere un nuovo componente
+
+1. Creare il widget in FlutterFlow (consigliato) o copiare un componente esistente in `lib/components`.
+2. Aggiornare o creare il relativo `Model` per gestire controller e sottocomponenti.
+3. Esporre il componente tramite export in `lib/index.dart` se deve essere richiamabile via router.
+4. Localizzare i testi aggiungendo le chiavi in `lib/flutter_flow/internationalization.dart`.
+5. Aggiornare la documentazione se il componente introduce nuovi pattern o dipendenze.

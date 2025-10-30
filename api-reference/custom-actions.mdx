@@ -1,0 +1,65 @@
+# Riferimento Custom Actions
+
+Azioni personalizzate nel codice Flutter BF Wellness.
+
+<Info>
+  Le custom actions sono definite in `lib/custom_code/actions/` e non vengono sovrascritte da FlutterFlow export.
+</Info>
+
+## Overview
+
+**Location**: `lib/custom_code/actions/`
+**Purpose**: Logica business custom non supportata nativamente da FlutterFlow
+
+## Available Actions
+
+### `generate_day_time_slot`
+
+**Purpose**: Genera slot temporali disponibili per un giorno specifico
+
+**Usage**:
+```dart
+final slots = await generateDayTimeSlot(
+  selectedDate: DateTime(2025, 11, 5),
+  serviceDuration: 90,  // minutes
+  workerRef: workerDocRef,
+);
+```
+
+### `extract_appointment_from_json`
+
+**Purpose**: Parser dati appuntamento da JSON/dynamic
+
+**Usage**:
+```dart
+final appointment = extractAppointmentFromJson(jsonData);
+```
+
+## Adding New Custom Actions
+
+1. Create file in `lib/custom_code/actions/my_action.dart`
+2. Define action with proper signature
+3. Export in `lib/custom_code/actions/index.dart`
+4. Use in widgets
+
+**Template**:
+```dart
+// lib/custom_code/actions/my_action.dart
+
+import 'package:flutter/material.dart';
+import '../../flutter_flow/flutter_flow_util.dart';
+
+Future<String> myAction(
+  BuildContext context, {
+  required String param1,
+  int? param2,
+}) async {
+  // Your logic here
+  return 'result';
+}
+```
+
+## Related
+
+- [Project Structure](/getting-started/project-structure)
+- [First Contribution](/getting-started/first-contribution)

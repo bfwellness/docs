@@ -1,0 +1,148 @@
+# Operatività e flusso di sviluppo
+
+Questa sezione raccoglie le istruzioni operative per lavorare sulle app BF Wellness, dall’allestimento dell’ambiente locale al deploy dei servizi collegati.
+
+## Prerequisiti
+
+<AccordionGroup>
+  <Accordion title="Stack principale">
+    - **Flutter** ≥ 3.16 (channel `stable`). Verifica con `flutter --version`. Suggerito FVM per isolare le versioni.
+    - **Dart** (incluso in Flutter) + **Xcode/Android Studio** per build mobile.
+    - **Node.js** ≥ 18 + **npm** per CLI, Firebase Functions e script Stripe.
+  </Accordion>
+  <Accordion title="Servizi esterni">
+    - **Firebase CLI** (`npm i -g firebase-tools`) con permesso sul progetto `bf-wellness-app`.
+    - **Algolia** – accesso API Admin e Search agli indici `clients`, `services`, `accomodations`.
+    - **Stripe** – chiavi test/prod (solo app ospiti) + account con diritti API.
+  </Accordion>
+  <Accordion title="Strumenti di supporto">
+    - Git + GitHub (vedi [Sorgente e versioning](source-control)).
+    - Accesso Monday.com per consultare roadmap e checklist.
+    - Credenziali SiteGround per eventuali interventi su WordPress.
+  </Accordion>
+</AccordionGroup>
+
+## Setup locale
+
+1. Clonare il repository e posizionarsi nella cartella dell’app (`apps/bf-wellness` o `apps/bf-spa`).
+2. Installare le dipendenze: `flutter pub get`.
+3. Verificare le dipendenze native con `flutter doctor`.
+4. Per web: assicurarsi di avere Chrome/Edge installato (Flutter usa WebRenderer).
+
+### Configurazione Firebase
+
+- Per build mobile occorre aggiungere `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) nelle rispettive cartelle (`android/app`, `ios/Runner`).
+- Localmente Firebase inizializza senza parametri (usa `DefaultFirebaseOptions.currentPlatform` generati in fase di build). Sul web vengono usate le `FirebaseOptions` hard-coded nei file `lib/backend/firebase/firebase_config.dart`.
+- Se si lavora su un progetto Firebase differente, aggiornare questi file e le configurazioni native, quindi rieseguire `flutter clean && flutter pub get`.
+
+<Card title="Stripe (solo BF Spa)" icon="credit-card" href="bf/bf-spa/pagamenti">
+  - Impostare `kStripeProdSecretKey` / `kStripeTestSecretKey` in `firebase/functions/index.js`.
+  - Aggiornare publishable key in `lib/backend/stripe/payment_manager.dart`.
+  - Testare in locale con `initStripeTestPayment` e carte sandbox.
+</Card>
+
+## Esecuzione e debugging
+
+| Azione | Comando |
+| --- | --- |
+| Avvio in debug (web) | `flutter run -d chrome` |
+| Avvio in debug (Android) | `flutter run -d emulator-5554` |
+| Avvio in debug (iOS) | `flutter run -d ios` |
+| Hot reload | `r` nella console di `flutter run` |
+| Hot restart | `R` nella console di `flutter run` |
+| Test unitari/widget | `flutter test` |
+
+Entrambe le app sfruttano provider e modelli generati; per ispezionare lo stato utilizzare i log del debugger o aggiungere `debugPrint`. Evitare `print` in produzione.
+
+## Build e distribuzione
+
+<Columns cols={3}>
+  <Card title="Android" icon="android">
+    - `flutter build apk --release`  
+    - `flutter build appbundle`  
+    - Ricordarsi di configurare `key.jks` / `key.properties`.
+  </Card>
+  <Card title="iOS" icon="apple">
+    - `flutter build ipa`  
+    - Necessari certificati e provisioning profile aggiornati.
+  </Card>
+  <Card title="Web" icon="globe">
+    - `flutter build web`  
+    - Deploy via Firebase Hosting (`firebase deploy --only hosting`).
+  </Card>
+</Columns>
+
+<Callout type="warning">
+Dopo ogni export da FlutterFlow: eseguire `flutter pub get`, build di prova e verificare la navigazione critica prima di commit/push.
+</Callout>
+
+## Deploy delle Cloud Functions
+
+1. Posizionarsi in `firebase/functions`.
+2. Installare/aggiornare le dipendenze `npm install`.
+3. Configurare eventuali variabili (`firebase functions:config:set`).
+4. Eseguire `firebase deploy --only functions`.
+5. Per test locali utilizzare `firebase emulators:start --only functions`.
+
+## Aggiornamento Algolia
+
+- Creare/aggiornare gli indici su Algolia (es. `clients`, `services`, `accomodations`).
+- Configurare la sincronizzazione da Firestore a Algolia tramite Cloud Functions o script manuali (non presente nativamente; valutare estensioni ufficiali).
+- Aggiornare la chiave API in `algolia_manager.dart` se cambia.
+
+## Manutenzione ricorrente
+
+<AccordionGroup>
+  <Accordion title="Aggiornamenti da FlutterFlow">
+    1. Esporta il progetto aggiornato.  
+    2. Confronta con Git mantenendo `custom_code`, `backend`, `firebase`.  
+    3. `flutter pub get`, `flutter run`, `flutter test`.  
+    4. Aggiorna la documentazione Mintlify relativa alla funzionalità toccata.
+  </Accordion>
+  <Accordion title="Dipendenze Flutter">
+    - Controllo `pubspec.yaml` ogni 2 mesi.  
+    - `flutter pub upgrade --major-versions` solo dopo test in staging.  
+    - Verifica build Android/iOS/web post aggiornamento.
+  </Accordion>
+  <Accordion title="Firebase">
+    - Revisione `firestore.rules` / `storage.rules` ad ogni release di sicurezza.  
+    - Aggiornare `firestore.indexes.json` se introdotte nuove query complesse.  
+    - Backup `gcloud firestore export` prima di operazioni invasive.
+  </Accordion>
+  <Accordion title="Stripe & Algolia">
+    - Ruotare chiavi Stripe (funzioni + payment manager) e testare con carte sandbox.  
+    - Controllare scadenza chiavi Algolia trimestralmente e riallineare gli indici.
+  </Accordion>
+  <Accordion title="Traduzioni e asset">
+    - Aggiornare `internationalization.dart` per nuove stringhe (IT/EN/ES).  
+    - QA manuale sulle tre lingue.  
+    - Pulire asset inutilizzati e aggiornare `pubspec.yaml`.
+  </Accordion>
+  <Accordion title="Backup & accessi">
+    - SiteGround: monitor fondi di backup giornalieri e restore trimestrale.  
+    - Monday/GitHub: revisione permessi utenti con il responsabile IT ogni trimestre.
+  </Accordion>
+</AccordionGroup>
+
+## Condivisione delle modifiche FlutterFlow
+
+1. Effettuare l’aggiornamento da FlutterFlow e scaricare il codice.
+2. Confrontare le differenze con `git diff`, mantenendo eventuali personalizzazioni in `custom_code` e file manuali.
+3. Eseguire i test (`flutter test`) e un giro di smoke test sull’app in debug.
+4. Aggiornare questa documentazione se vengono introdotte nuove schermate, collezioni o flussi.
+
+## Checklist pre-rilascio
+
+- [ ] Incrementare `version` e `build number` nel `pubspec.yaml`.
+- [ ] Aggiornare changelog interno e comunicare le nuove funzionalità allo staff.
+- [ ] Eseguire build di release per le piattaforme interessate.
+- [ ] Deployare funzioni, regole Firestore/Storage e hosting (se applicabile).
+- [ ] Validare i pagamenti Stripe in ambiente test e, se necessario, in produzione.
+- [ ] Aggiornare gli indici Algolia e verificare una ricerca campione.
+- [ ] Confermare che le lingue supportate (IT/EN/ES) siano consistenti nelle nuove schermate.
+
+## Coordinamento con Monday.com
+
+- Ogni iniziativa tecnica deve essere riflessa nel board Monday corrispondente (Dev, Operations, Marketing) indicando commit, branch e stato deploy.
+- Allegare link alle storie Git/Mintlify nelle card Monday per mantenere una tracciabilità completa.
+- Quando un rilascio viene promosso in produzione, aggiornare la timeline Monday e notificare il team tramite automazione o menzione diretta.

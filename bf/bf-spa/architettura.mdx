@@ -1,0 +1,113 @@
+# Architettura applicativa (BF Spa Ospiti)
+
+L’app `bf-spa` condivide gran parte dello scheletro con la versione staff, ma introduce componenti mirati all’esperienza utente finale e all’integrazione Stripe.
+
+## Stack tecnologico
+
+- **Flutter 3** (web + mobile) generato da FlutterFlow.
+- **Gestione stato**: `Provider`/`FFAppState` + modelli generati (`FlutterFlowModel`).
+- **Backend**: stesso progetto Firebase (`bf-wellness-app`) con Auth, Firestore, Storage e Functions.
+- **Ricerca**: Algolia.
+- **Pagamenti**: `flutter_stripe` + callable Cloud Functions per `Stripe PaymentIntents`.
+- **Librerie aggiuntive rispetto a BF Wellness**:
+  - `cloud_functions`, `flutter_stripe`, `stripe_android`, `stripe_ios`, `stripe_js`.
+  - `youtube_player_iframe` (via repo FlutterFlow) per video training.
+  - `webview_flutter` / `webviewx_plus` per presentare contenuti esterni.
+
+## Struttura del progetto
+
+```text
+apps/bf-spa/
+├─ lib/
+│  ├─ screens/                 # Schermate cliente (booking, home, training…)
+│  ├─ components/              # Widget condivisi (navbar, liste servizi, card prenotazioni)
+│  ├─ accomodations/           # Moduli dedicati alla scelta struttura
+│  ├─ backend/
+│  │  ├─ schema/               # Record Firestore (inclusi accomodations, training_videos)
+│  │  ├─ firebase/             # Init Firebase (stesse credenziali app staff)
+│  │  └─ stripe/               # Payment manager + helper callable functions
+│  ├─ flutter_flow/            # Framework FlutterFlow (nav, tema, utilità)
+│  ├─ custom_code/             # Azioni e funzioni personalizzate (es. integrazione video)
+│  ├─ auth/, main.dart, app_state.dart, index.dart
+│  └─ test/                    # Test widget/integration (da espandere)
+├─ assets/                     # Immagini, video promo, icone user-facing
+├─ firebase/                   # Funzioni Node.js (Stripe), rules e indexes condivise
+├─ android/, ios/, web/        # Configurazioni piattaforme
+└─ pubspec.yaml
+```
+
+> 📁 Anche per l’app ospiti è fondamentale preservare `backend/stripe`, `custom_code` e le configurazioni Firebase/Stripe quando si aggiorna il progetto da FlutterFlow.
+
+## Bootstrap e configurazioni
+
+Il ciclo di inizializzazione è analogo allo staff:
+
+1. `lib/main.dart` invoca `initFirebase()` (stesse credenziali).
+2. `FFAppState` mantiene preferenze come lingua, struttura selezionata, onboarding.
+3. `MaterialApp.router` utilizza `GoRouter` generato da FlutterFlow.
+4. Lingue supportate: IT/EN/ES (stesso file di localizzazione condiviso).
+
+## Moduli architetturali distintivi
+
+### Catalogo strutture
+
+- **File principali**: `lib/accomodations/accomodations_widget.dart`, `lib/backend/schema/accomodations_record.dart`, `accomodation_workers_record.dart`.
+- Mostra elenco strutture BF con filtri per paese/servizi.
+- Utilizza `ServiceDataStruct` e `WorkerDataStruct` per arricchire la UI con informazioni sulla disponibilità.
+- Integra funzioni custom (`functions` namespace in FlutterFlow) per calcolare servizi in evidenza (`functions.getFeaturedServices` se definito).
+
+### Prenotazione self-service
+
+- Stesso percorso multi-step, ma ottimizzato per ospite:
+  - `screens/booking/second_bookings_agenda` e `second_bookings_list` offrono viste semplificate.
+  - Integrazione con Stripe nella fase di conferma se l’ospite sceglie il pagamento immediato.
+- La logica di generazione slot riutilizza le funzioni `generateAvailableTimeSlots` (importate da `flutter_flow/custom_functions.dart`).
+
+### Pagamenti Stripe
+
+- **Callable Functions** (`firebase/functions/index.js`):
+  - `initStripePayment` (produzione) / `initStripeTestPayment` (sandbox).
+  - Creano/riutilizzano il customer, generano `PaymentIntent` e `EphemeralKey`, restituiscono `client_secret`.
+- **Front-end**:
+  - `flutter_stripe` gestisce l’interfaccia di checkout.
+  - I widget di conferma pagamento convertono gli importi in centesimi (richiesta Stripe).
+  - Dopo esito positivo viene salvato un documento in `payments` e aggiornato lo stato della prenotazione.
+- Le chiavi Stripe sono definite nel file di Functions; assicurarsi di configurarle prima del deploy.
+
+### Sezione training
+
+- **File**: `screens/training/**`, `backend/schema/training_videos_record.dart`.
+- Riproduce video (YouTube iframe) e gestisce filtri/tag.
+- Compatibile con streaming in-app e con browser desktop/mobile.
+
+### Supporto e help
+
+- `screens/help/help_widget.dart` aggrega contatti, FAQ e link utili (es. `mailto:`, `tel:`).
+- `screens/about/about_widget.dart` fornisce informazioni istituzionali e collegamenti a privacy/TOS.
+
+## Layout e UX
+
+- Su web la struttura ricalca il layout a due colonne (SideNav + contenuto). Su mobile, la navigazione diventa bottom bar o drawer (variabile in base alla versione esportata da FlutterFlow).
+- `FFAppState.currentNavIndex` mantiene la sezione attiva e sincronizza side/bottom navigation.
+- I widget utilizzano `SmoothPageIndicator`, `Lottie`, `cached_network_image` per migliorare l’esperienza utente.
+
+## Modello dati aggiuntivo
+
+- `accomodations_record` memorizza metadati (nome, slug, geolocalizzazione, hero images, orari).
+- `accomodation_workers_record` collega operatori a strutture, utile per filtrare disponibilità.
+- `training_videos_record` archivia contenuti rich media con durata e URL di streaming.
+- Queste collezioni si affiancano a quelle condivise documentate in [Modello dati](../../data-model).
+
+## Sicurezza e privacy
+
+- Gli ospiti autenticati possono accedere solo ai documenti che li riguardano (regole Firestore da verificare in `firebase/firestore.rules`).
+- I pagamenti avvengono tramite Stripe; nessun dato sensibile viene salvato nel database (solo metadati della transazione).
+- Le preferenze utente sono memorizzate in `FFAppState` (locale) e replicate in Firestore quando necessario.
+
+## Estensioni possibili
+
+- **Notifiche push** (Firebase Cloud Messaging) per ricordare prenotazioni.
+- **Programma fedeltà**: nuova collezione per punti/storico premi.
+- **Integrazione CRM esterno**: sfruttare `firebase/functions/api_manager.js` per chiamate HTTP sicure verso sistemi terzi.
+
+Per procedure operative vedere [Operatività](../../operativita). Per il dettaglio dei flussi utente consultare [Funzionalità](funzionalita).

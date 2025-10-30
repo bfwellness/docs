@@ -1,0 +1,221 @@
+# Riferimento Cloud Functions
+
+Backend serverless functions nel progetto BF Wellness.
+
+## Overview
+
+**Platform**: Firebase Cloud Functions (Node.js)
+**Region**: europe-west3
+**Runtime**: Node.js 18
+
+## Functions by App
+
+### bf-wellness
+
+#### `onUserDeleted`
+
+**Type**: Auth trigger
+**Trigger**: `auth.user().onDelete`
+**Purpose**: Cleanup Firestore quando un utente Firebase Auth viene eliminato
+
+**Implementation**:
+```javascript
+exports.onUserDeleted = functions
+  .region('europe-west3')
+  .auth.user().onDelete((user) => {
+    return admin.firestore()
+      .collection('users')
+      .doc(user.uid)
+      .delete();
+  });
+```
+
+**When it runs**: Automaticamente quando un user viene cancellato da Firebase Auth
+
+---
+
+### bf-spa (Extended)
+
+#### `initStripePayment`
+
+**Type**: HTTPS Callable
+**Purpose**: Crea un Stripe payment intent per pagamenti online
+
+**Parameters**:
+```typescript
+{
+  amount: number;        // in cents (es: 10000 = €100.00)
+  currency: string;      // 'eur'
+  customer?: string;     // Stripe customer ID (optional)
+}
+```
+
+**Returns**:
+```typescript
+{
+  clientSecret: string;  // Per completare pagamento client-side
+  paymentIntentId: string;
+}
+```
+
+**Implementation**:
+```javascript
+exports.initStripePayment = functions.https.onCall(async (data, context) => {
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+  // Get or create customer
+  let customerId = data.customer;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: context.auth.token.email
+    });
+    customerId = customer.id;
+  }
+
+  // Create payment intent
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: data.amount,
+    currency: data.currency || 'eur',
+    customer: customerId,
+  });
+
+  // Create ephemeral key
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    { customer: customerId },
+    { apiVersion: '2020-08-27' }
+  );
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    ephemeralKey: ephemeralKey.secret,
+    customer: customerId,
+    paymentIntentId: paymentIntent.id
+  };
+});
+```
+
+**Usage from app**:
+```dart
+final callable = FirebaseFunctions.instance.httpsCallable('initStripePayment');
+final result = await callable.call({
+  'amount': 10000,
+  'currency': 'eur',
+});
+final clientSecret = result.data['clientSecret'];
+```
+
+#### `initStripeTestPayment`
+
+**Type**: HTTPS Callable
+**Purpose**: Versione test di `initStripePayment` usando Stripe test keys
+
+**Same interface as `initStripePayment`** ma usa `STRIPE_TEST_KEY`
+
+---
+
+## Deployment
+
+### Prerequisites
+
+```bash
+cd firebase/functions
+npm install
+```
+
+### Deploy All Functions
+
+```bash
+firebase deploy --only functions
+```
+
+### Deploy Specific Function
+
+```bash
+firebase deploy --only functions:onUserDeleted
+firebase deploy --only functions:initStripePayment
+```
+
+### Environment Variables
+
+**Set** (production):
+```bash
+firebase functions:config:set stripe.secret_key="sk_live_..."
+firebase functions:config:set stripe.test_key="sk_test_..."
+```
+
+**Get** current config:
+```bash
+firebase functions:config:get
+```
+
+## Monitoring
+
+### Logs
+
+```bash
+# Real-time logs
+firebase functions:log
+
+# Filter by function
+firebase functions:log --only initStripePayment
+```
+
+### Firebase Console
+
+View logs, metrics, errors: [Firebase Console → Functions](https://console.firebase.google.com/project/bf-wellness-app/functions)
+
+## Error Handling
+
+All functions should handle errors gracefully:
+
+```javascript
+exports.myFunction = functions.https.onCall(async (data, context) => {
+  try {
+    // Function logic
+    return { success: true };
+  } catch (error) {
+    console.error('Error in myFunction:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always validate input">
+    ```javascript
+    if (!data.amount || typeof data.amount !== 'number') {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Amount is required and must be a number'
+      );
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Check authentication when needed">
+    ```javascript
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'Must be logged in'
+      );
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Use regions for better performance">
+    ```javascript
+    exports.myFunction = functions
+      .region('europe-west3')  // Same as Firestore
+      .https.onCall(...);
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<Card title="Stripe Integration" icon="credit-card" href="/features/payments/stripe-integration">
+  Complete Stripe payment flow documentation
+</Card>

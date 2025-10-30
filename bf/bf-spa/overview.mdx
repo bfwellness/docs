@@ -1,0 +1,35 @@
+# BF Spa (Ospiti) – Panoramica
+
+`bf-spa` è l’applicazione rivolta agli **ospiti delle strutture BF**. Permette di scoprire servizi, prenotare trattamenti, pagare in autonomia e accedere a contenuti dedicati (ad esempio video formativi). È ottimizzata per l’utilizzo su dispositivi mobili, ma funziona su tutte le piattaforme supportate da Flutter.
+
+## Scopo e valore
+
+- Offrire agli ospiti un’esperienza digitale completa prima, durante e dopo il soggiorno.
+- Ridurre il carico operativo sullo staff abilitando prenotazioni e pagamenti self-service.
+- Presentare contenuti personalizzati per struttura (catalogo trattamenti, operatori disponibili, materiale informativo).
+- Sincronizzarsi in tempo reale con l’app staff per garantire coerenza delle informazioni.
+
+## Utenti target
+
+- **Ospiti in struttura**: consultano disponibilità, prenotano e pagano trattamenti.
+- **Clienti esterni**: accedono al catalogo servizi e possono prenotare anche prima dell’arrivo.
+- **Guest fidelizzati**: ricevono contenuti esclusivi (video training, suggerimenti personalizzati) e possono rivedere la propria cronologia.
+
+## Moduli principali
+
+- **Home personalizzata**: saluta l’ospite, mostra prenotazioni future, servizi consigliati e promozioni.
+- **Catalogo trattamenti**: navigazione per categorie con schede ricche di immagini, descrizioni, durata e prezzo.
+- **Prenotazione guidata**: flusso self-service simile a quello staff ma semplificato (servizio → data/orario → operatore → conferma).
+- **Pagamenti Stripe**: possibilità di pagare subito tramite carta (Stripe) o scegliere altri metodi se consentiti.
+- **Gestione profilo**: modifica dei dati personali, lingua preferita, preferenze privacy.
+- **Sezione training**: video e contenuti educativi sui rituali BF, fruibili via streaming.
+- **Supporto e help**: contatti rapidi con la struttura e FAQ dedicate.
+- **Mappe e strutture**: selezione struttura di riferimento, esplorazione servizi disponibili onsite.
+
+## Collegamento con lo staff
+
+- Le prenotazioni create dall’ospite compaiono immediatamente nell’agenda staff.
+- I pagamenti effettuati via app aggiornano i campi economici del cliente (`paid`, `toPay`) e generano record in `payments`.
+- Le modifiche a disponibilità/operatori gestite dallo staff si riflettono nel flusso di prenotazione ospite (grazie alla condivisione di `accomodation_services`, `workers`, `appointments`).
+
+Per dettagli tecnici consultare [Architettura](architettura), mentre la sezione [Funzionalità](funzionalita) illustra i flussi passo-passo disponibili agli ospiti.

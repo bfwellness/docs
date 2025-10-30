@@ -1,0 +1,89 @@
+# Prenotazioni self-service (BF Spa Ospiti)
+
+Gli ospiti seguono un flusso semplificato rispetto allo staff ma basato sulle stesse collezioni (`appointments`, `clients`, `accomodation_services`). Questa pagina spiega i passaggi, le logiche di disponibilità e come i dati vengono sincronizzati con l’app `bf-wellness`.
+
+## Flusso principale
+
+<Steps>
+  <Step title="Servizio" href="#selezione-servizio">Scelta trattamento in base alla struttura e ai filtri.</Step>
+  <Step title="Operatore" href="#operatori">Selezione facoltativa di un operatore preferito.</Step>
+  <Step title="Data e ora" href="#calendario-e-slot">Calendario mobile-friendly con slot generati dinamicamente.</Step>
+  <Step title="Conferma & pagamento" href="#conferma-e-creazione">Riepilogo finale e opzione Stripe.</Step>
+</Steps>
+
+La selezione cliente è implicita (utente autenticato); l’ID Firebase Auth viene usato per popolare `AppointmentsRecord.client` e lo snapshot `ClientDataStruct`.
+
+## Selezione servizio
+
+<Card title="Catalogo contestualizzato" icon="spa" href="bf/bf-spa/catalogo">
+  - Filtra per struttura (`FFAppState.selectedAccomodation`).  
+  - Card con immagini, prezzo, durata, operatori certificati (`AccomodationWorkersRecord`).  
+  - CTA “Avanti” trasferisce `AccomodationServicesRecord` serializzato al passo successivo.
+</Card>
+
+## Operatori
+
+<AccordionGroup>
+  <Accordion title="Quando serve">
+    - Per servizi che richiedono competenze specifiche.  
+    - Filtra `WorkersRecord` via `AccomodationWorkersRecord.visible == true`.
+  </Accordion>
+  <Accordion title="Disponibilità">
+    - Usa `generateWorkerAvailableTimeSlots()` (stessa funzione dell’app staff).  
+    - Mostra slot giornalieri e indica quando un operatore non è disponibile.  
+    - L’ospite può lasciare il campo vuoto per assegnazione dallo staff.
+  </Accordion>
+</AccordionGroup>
+
+## Calendario e slot
+
+<Checklist>
+  <ChecklistItem>Calendario mobile-friendly (`BookingDateSelectionWidget`).</ChecklistItem>
+  <ChecklistItem>Query `AppointmentsRecord` per evitare sovrapposizioni con altri booking dell’utente o operatore.</ChecklistItem>
+  <ChecklistItem>`generateAvailableTimeSlots()` calcola slot liberi con buffer e orario locale.</ChecklistItem>
+  <ChecklistItem>Modifica operatore ⇒ ricalcolo immediato degli slot.</ChecklistItem>
+</Checklist>
+
+## Conferma e creazione
+
+- `BookingConfirmWidget` riepiloga tutte le scelte e mostra eventuali costi aggiuntivi.
+- Alla conferma:
+  - Viene scritto un documento `AppointmentsRecord` con `client` = utente corrente e `clientData` popolato da `UsersRecord`.
+  - I campi `source` o `channel` (se presenti) possono essere impostati a `guest_app` per distinguere le prenotazioni self-service (campo aggiuntivo da valutare in futuro).
+- Se l’utente sceglie pagamento immediato, viene reindirizzato al flusso Stripe prima della finalizzazione (vedi [Pagamenti ospite](pagamenti)).
+
+## Gestione prenotazioni esistenti
+
+<Tabs>
+  <Tab title="Lista rapida">
+    - Widget: `second_bookings_list_widget`.  
+    - Tab &quot;Future / Passate / Annullate&quot; con `InfiniteScrollPagination`.  
+    - Azioni: cancella (`booking_cancel`), riprogramma (`booking_reschedule_*`).
+  </Tab>
+  <Tab title="Agenda personale">
+    - Widget: `second_bookings_agenda_widget`.  
+    - Vista settimanale, slot mattina/pomeriggio.  
+    - Riusa `extractAppointmentFromJson` per uniformare i dati all’app staff.
+  </Tab>
+</Tabs>
+
+## Cancellazioni e riprogrammazioni
+
+- **Cancellazione**: `lib/screens/booking/booking_cancel/booking_cancel_widget.dart`.
+  - Richiede conferma, imposta `canceled = true` e `cancellationReason` (motivazione fornita dall’ospite).
+  - Notifica automaticamente lo staff tramite snapshot Firestore (lo staff vede l’aggiornamento in agenda).
+- **Riprogrammazione**:
+  - Riutilizza i widget `booking_reschedule_operators_selection` e `booking_reschedule_date_selection`.
+  - Garantisce che gli slot proposti tengano conto delle prenotazioni attive sia lato ospite sia lato staff.
+
+## Sincronizzazione con l’app staff
+
+- Le prenotazioni create qui appaiono immediatamente in `bf-wellness` (agenda e lista).
+- Quando lo staff modifica un appuntamento (es. cambio operatore), l’ospite vede l’aggiornamento in lista/agenda grazie allo stream `AppointmentsRecord`.
+- Campi come `clientData`, `serviceData` e `workersData` sono condivisi tra le due app, evitando letture ripetute di documenti aggiuntivi.
+
+## Best practice UX
+
+- Assicurarsi che la struttura sia sempre selezionata (fallback a default) prima di entrare nel flusso prenotazione per evitare dataset vuoti.
+- Mantenere copy e grafica coerenti con comunicazioni marketing (sincronizzazione con Monday.com).
+- Testare il flusso su dispositivi mobili reali, verificando che gli slot generati rispettino fusi orari e formati orari locali.

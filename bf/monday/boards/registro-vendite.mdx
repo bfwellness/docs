@@ -1,0 +1,49 @@
+# Registro vendite
+
+<Callout type="info">
+Board ID: `1179900511` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Traccia vendite di servizi e prodotti post-prenotazione.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Vendite | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Stato pagamento | `status` | Stati: Parziale, Pagato, Scaduto, In attesa |
+| Data vendita | `date` | — |
+| Cliente | `text` | — |
+| Note | `text` | — |
+| Pagamenti | `numbers` | — |
+| Scadenza pagamento | `date` | — |
+| Struttura | `board_relation` | Relazione con: Strutture |
+| Incassato | `numbers` | Unità: € |
+| A saldo | `numbers` | Unità: € |
+| Sotto elementi | `subtasks` | Subitems gestiti dalla board: Sotto elementi di Registro vendite |
+| Totale vendita | `mirror` | Mirror di: Sotto elementi di Registro vendite → numeri |
+
+## Uso operativo
+
+- Ogni item rappresenta una vendita; le righe dettagliate sono nei subitems.
+- Colonne `Pagamenti`, `Incassato`, `A saldo` tengono traccia degli importi.
+- Stato pagamento guida follow-up amministrativo.
+
+## Integrazioni e relazioni
+
+- Subitems `Sotto elementi di Registro vendite` (1179902697) dettagliano i prodotti venduti.
+- Mirror `Totale vendita` calcolato automaticamente.
+- Automazioni per inviare reminder su scadenze (da configurare).
+
+## Checklist di manutenzione
+
+- Aggiornare stato pagamento al ricevimento incassi.
+- Verificare coerenza con contabilità esterna.

@@ -1,0 +1,49 @@
+# Staff variazioni
+
+<Callout type="info">
+Board ID: `1186157200` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Gestisce modifiche alla pianificazione staff (ferie, permessi, cambio turno).
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Variazioni | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Staff | `board_relation` | Relazione con: Staff |
+| Matricola | `text` | — |
+| Tipo di variazione | `dropdown` | Opzioni: Nuovo, Proroga, Spostamento, TFR |
+| Struttura | `board_relation` | Relazione con: Strutture |
+| Data inizio | `date` | — |
+| Data fine | `date` | — |
+| Paga base | `numbers` | Unità: € |
+| Ore contratto | `dropdown` | Opzioni: 18 ORE, 30 ORE, 15 ORE, A Chiamata, P.IVA, 28 ORE, 9 ORE, TFR, 20 ORE, Bonus Settembre, Malattia, 32 ORE, 4 ORE, 16 ORE, 40 ORE, 34 ORE, 40 |
+| Provvigioni | `checkbox` | Flag booleano |
+| Premi | `checkbox` | Flag booleano |
+| Nome struttura importazione | `text` | — |
+| Vitto | `checkbox` | Flag booleano |
+| Alloggio | `checkbox` | Flag booleano |
+
+## Uso operativo
+
+- Creare un item per ogni variazione, indicare date e premi/penalità.
+- Relazioni con Staff e Strutture per contestualizzare.
+
+## Integrazioni e relazioni
+
+- Automazioni Make aggiornano eventuali calendari Google / app staff.
+- Rifornisce KPI su Centri di ricavo.
+
+## Checklist di manutenzione
+
+- Verificare incentivi/penali a fine mese.
+- Chiudere variazioni una volta applicate.

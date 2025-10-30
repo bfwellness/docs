@@ -1,0 +1,128 @@
+# Modello dati e servizi condivisi
+
+Entrambe le applicazioni utilizzano lo stesso progetto **Firebase (`bf-wellness-app`)** con Firestore come fonte dati primario, Cloud Functions per la logica server-side e Algolia per la ricerca testuale. Questo database centralizza tutte le informazioni operative dell’ecosistema (clienti, prenotazioni, pagamenti, catalogo servizi) e funge da ponte tra app staff, app ospiti e strumenti esterni. Questa pagina sintetizza le entità chiave e le integrazioni collegate.
+
+## Firestore
+
+### Collezioni condivise
+
+| Collezione | Proprietario | Descrizione | Campi chiave | Sync Monday |
+| --- | --- | --- | --- | --- |
+| `users` | Staff & ospiti | Profili autenticati. Popolata tramite Firebase Auth (email/password + provider social). | `displayName`, `email`, `photoUrl`, `phoneNumber`, `role`, `language`, `created_time`, `last_active_time` | ✅ Utenti App BF (1175249523) |
+| `clients` | Staff | Anagrafica dei clienti (ospiti o esterni) gestita dallo staff. Indicizzata su Algolia per la ricerca. | `name`, `surname`, `email`, `phone_number`, `room_number`, `start_of_stay`, `end_of_stay`, `paid`, `toPay`, `created_by` | ❌ Gestito da app |
+| `appointments` | Staff & ospiti | Prenotazioni di trattamenti. Contiene riferimenti a clienti, operatori e dettagli di servizio. | `workers` (ref), `client` (ref), `clientData`, `serviceData`, `startDate`, `endDate`, `duration`, `price`, `canceled`, `cancellationReason`, `canceledBy` | ❌ Gestito da app |
+| `payments` | Staff & ospiti | Tracciamento incassi (contanti, carta, addebito in camera). | `client` (ref), `appointment` (ref), `method` (`PaymentMethods` enum), `amount`, `status`, `notes`, `created_time`, `recorded_by` | ❌ Gestito da app |
+| `sales` | Staff | Vendite di prodotti o pacchetti. | `client` (ref), `items`, `total`, `status`, `channel`, `created_time`, `registered_by` | ❌ Gestito da app |
+| `products` / `services` | Staff | Catalogo prodotti e pacchetti vendibili in struttura. | `name`, `description`, `category`, `price`, `duration`, `image`, `tags`, `is_active` | ✅ Trattamenti e prodotti (1175239733) |
+| `service_categories` | Staff & ospiti | Tassonomia per filtrare servizi e trattamenti. | `name`, `order`, `icon`, `visible`, `color` | ✅ Categorie servizi (1179916747) |
+| `workers` | Staff | Profili degli operatori (dipendenti e collaboratori). | `name`, `surname`, `roles`, `qualifications` (ref), `is_active`, `thumbnail`, `bio` | ✅ Staff (1175246540) |
+| `qualifications` | Staff | Elenco certificazioni e competenze assegnate agli operatori. | `name`, `description`, `services` | ✅ Qualifiche staff (1185000060) |
+| `accomodation_services` | Staff & ospiti | Lega servizi/esperienze a una struttura o SPA specifica, usata per filtrare contenuti sia per staff che ospiti. | `accomodation` (ref), `service` (ref), `is_featured`, `order` | ✅ Listini (1175238188) |
+
+### Collezioni specifiche di BF Spa
+
+| Collezione | Descrizione | Campi chiave | Sync Monday |
+| --- | --- | --- | --- |
+| `accomodations` | Catalogo delle strutture BF visibili agli ospiti, con info su paese, contatti, immagini e coordinate. | `name`, `slug`, `description`, `hero`, `gallery`, `contacts`, `timezone`, `services` | ✅ Strutture (1175215598) |
+| `accomodation_workers` | Mappatura operatori/strutture per mostrare disponibilità locali. | `accomodation` (ref), `worker` (ref), `roles`, `visible` | ✅ Incarichi staff (1180066886) |
+| `training_videos` | Contenuti formativi fruibili dagli ospiti (o staff) via app. | `title`, `description`, `videoUrl`, `thumbnail`, `duration`, `tags`, `order`, `is_featured` | ❌ Gestito manualmente |
+
+### Struct e campi annidati
+
+Molti documenti includono struct generati da FlutterFlow (`/lib/backend/schema/structs`):
+
+- `ClientDataStruct` – snapshot denormalizzato di nome, email, note e numero camera al momento della prenotazione/pagamento.
+- `ServiceDataStruct` – static snapshot del servizio prenotato (titolo, prezzo, durata, categoria).
+- `WorkerDataStruct` – lista di operatori assegnati con nome e ruolo.
+- `AppointmentDataStruct` / `ProductDataStruct` – usati per arricchire pagine di dettaglio e riepiloghi.
+
+> ℹ️ Gli struct vengono serializzati nei campi `*_data` per prevenire inconsistenze quando i riferimenti Firestore cambiano.
+
+### Indicizzazioni e query
+
+- Algolia gestisce la ricerca per clienti, servizi e strutture. Le credenziali sono definite in `lib/backend/algolia/algolia_manager.dart` (`applicationId: JQA9QP4JNP`, `apiKey: 3c3c7587c05000f81da86b8f4d3140ec`). Verificare periodicamente che gli indici lato Algolia siano sincronizzati.
+- Le schermate di agenda e prenotazioni utilizzano query Firestore con filtri su `startDate`, `canceled` e `workers`. Prestare attenzione agli indici definiti in `firebase/firestore.indexes.json`.
+
+## Cloud Functions
+
+| File | Funzione | Note operative |
+| --- | --- | --- |
+| `firebase/functions/index.js` (bf-wellness) | `onUserDeleted` | Trigger `auth.user().onDelete` in `europe-west3`. Cancella il documento corrispondente in `users` per mantenere allineato Firestore. |
+| `firebase/functions/index.js` (bf-spa) | `initStripePayment`, `initStripeTestPayment` | Callable Functions che inizializzano un pagamento Stripe (prod/test). Creano/recuperano il customer, generano `paymentIntent` ed `ephemeralKey`. Necessitano delle chiavi Stripe configurate nel file (la chiave prod è volutamente vuota e va popolata in fase di deploy). |
+| `firebase/functions/api_manager.js` | Wrapper generico per eventuali chiamate HTTP private. Attualmente la mappa `callMap` è vuota ma rappresenta il punto di estensione per SAFE API calate da FlutterFlow. |
+
+### Deploy
+
+- Installare le dipendenze `npm install` nella cartella `firebase/functions`.
+- Eseguire `firebase deploy --only functions:onUserDeleted` o `--only functions` per pubblicare.
+- Per Stripe test è necessario impostare le variabili di ambiente (ad es. `firebase functions:config:set stripe.test_key="..."`), in alternativa mantenere le chiavi hard-coded come nel repository.
+
+## Storage e contenuti statici
+
+- `assets/images`, `assets/videos`, `assets/audios`, `assets/pdfs` contengono media utilizzati in entrambi i progetti.
+- I loghi e le favicon risiedono nella cartella `assets/images` (app) e `docs/logo` (documentazione).
+- I video formativi e le immagini strutture possono essere caricati in Firebase Storage; i metadati vivono nelle collezioni Firestore descritte sopra.
+
+## Sicurezza e regole
+
+- Le regole Firestore e Storage sono versionate in `firebase/firestore.rules` e `firebase/storage.rules`. Qualsiasi modifica deve essere testata con `firebase emulators` prima del deploy.
+- L’app sfrutta Firebase Auth; assicurarsi che i provider (Email/Password, Google, Facebook, Apple) siano abilitati nella console.
+
+## Gestionale Monday.com e Sincronizzazione
+
+Oltre al datastore Firebase, l'organizzazione utilizza un **workspace Monday.com** come gestionale operativo (vedi [pagina dedicata](monday)). Le board Monday sono il riferimento per:
+
+- Pianificazione roadmap prodotto, priorità di sviluppo e assegnazione task.
+- Coordinamento marketing/operations (lancio pacchetti, campagne SPA).
+- Monitoraggio richieste provenienti dalle strutture e dagli ospiti.
+- **Master data management**: configurazione categorie, listini, qualifiche, strutture.
+
+### Sincronizzazione Automatica con Make.com
+
+Alcune collezioni Firestore sono **sincronizzate automaticamente** con Monday.com tramite scenari Make.com:
+
+**Collezioni sincronizzate** (Master Data):
+| Collection Firestore | Board Monday.com | Board ID | Sync |
+|---------------------|-----------------|----------|------|
+| `service_categories` | Categorie servizi | 1179916747 | ✅ Automatico |
+| `accomodation_services` | Listini | 1175238188 | ✅ Automatico |
+| `qualifications` | Qualifiche staff | 1185000060 | ✅ Automatico |
+| `accomodations` | Strutture | 1175215598 | ✅ Automatico |
+| `services` | Trattamenti e prodotti | 1175239733 | ✅ Automatico |
+| `workers` | Staff | 1175246540 | ✅ Automatico |
+| `accomodation_workers` | Incarichi staff | 1180066886 | ✅ Automatico |
+| `users` | Utenti App BF | 1175249523 | ✅ Automatico |
+
+**Collezioni NON sincronizzate** (gestione diretta via app):
+- `appointments` - Prenotazioni create dall'app staff → Firestore
+- `clients` - Clienti registrati dall'app staff → Firestore
+- `payments` - Pagamenti tracciati dall'app staff → Firestore
+- `sales` - Vendite registrate dall'app staff → Firestore
+- `training_videos` - Gestiti manualmente
+- `currentWorkersAccomodation` - Snapshot stato corrente
+- `ff_push_notifications` - Sistema notifiche Firebase
+
+### Campi di Tracking Sincronizzazione
+
+**Su Monday.com**, ogni board sincronizzata mantiene due colonne chiave:
+- **`FirestoreId`** (text): ID univoco del documento Firestore corrispondente
+- **`Ultimo Sync`** (date): Timestamp ultima sincronizzazione riuscita
+
+**Pattern di sincronizzazione**:
+1. Se `FirestoreId` è vuoto → Make.com **crea** nuovo documento Firestore
+2. Se `FirestoreId` presente → Make.com **aggiorna** documento esistente
+3. Dopo ogni operazione → Aggiorna `Ultimo Sync` con timestamp corrente
+
+**Forzare sincronizzazione**: Svuotare campo `Ultimo Sync` su Monday.com per forzare aggiornamento
+
+⚠️ **Avvertenza**: Non cancellare mai `FirestoreId` senza eliminare il documento Firestore corrispondente (rischio duplicati)
+
+Per dettagli completi: [Automazioni Make.com →](make)
+
+## Checklist quando si introduce una nuova entità
+
+1. Creare il record in `lib/backend/schema` con i metadati necessari.
+2. Aggiungere eventuali struct di supporto in `lib/backend/schema/structs`.
+3. Aggiornare le query generate da FlutterFlow o creare nuove funzioni in `backend/backend.dart`.
+4. Se la collezione deve essere ricercabile, configurare l’indice Algolia e aggiornare `algolia_manager.dart`.
+5. Aggiornare questa pagina con la descrizione della nuova collezione.

@@ -1,0 +1,45 @@
+# Sotto elementi di Listini
+
+<Callout type="info">
+Board ID: `1175238691` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Subitems generati da Monday per dettagliare le voci del listino.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Subitems | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Trattamento | `board_relation` | Relazione con: Trattamenti e prodotti |
+| Prezzo | `mirror` | Mirror di: Trattamenti e prodotti → numeri |
+| Durata | `mirror` | Mirror di: Trattamenti e prodotti → numeri0 |
+| Descrizione IT | `mirror` | Mirror di: Trattamenti e prodotti → testo_lungo |
+| Prezzo struttura | `numbers` | Unità: € |
+| Durata struttura | `numbers` | — |
+| Descrizione struttura IT | `long_text` | — |
+| Descrizione struttura EN | `text` | — |
+| Descrizione struttura ES | `text` | — |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+| Ultimo Sync | `date` | — |
+
+## Uso operativo
+
+- Non creare manualmente: viene popolato tramite interfaccia subitems.
+- Contiene prezzi/durate custom rispetto al catalogo principale.
+
+## Integrazioni e relazioni
+
+- Mirror con `Trattamenti e prodotti` per ereditare prezzi/durate.
+
+## Checklist di manutenzione
+
+- Verificare coerenza con il listino PDF caricato.

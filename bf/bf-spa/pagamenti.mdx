@@ -1,0 +1,56 @@
+# Pagamenti ospite (BF Spa)
+
+L’app `bf-spa` consente agli ospiti di pagare al momento della prenotazione tramite Stripe oppure di scegliere formule alternative gestite dallo staff. Questa pagina spiega il flusso tecnico, le integrazioni e l’impatto sui dati.
+
+## Componenti principali
+
+- **Payment manager**: `lib/backend/stripe/payment_manager.dart` incapsula tutta la logica Stripe (chiavi, inizializzazione payment sheet, gestione web vs mobile).
+- **Callable Functions**: `firebase/functions/index.js` espone `initStripePayment` e `initStripeTestPayment`, che creano `PaymentIntent`, `EphemeralKey` e customer (riutilizzando lo stesso account Stripe della struttura).
+- **Cloud Functions helper**: `lib/backend/cloud_functions/cloud_functions.dart` fornisce `makeCloudCall()` per invocare le callable in modo tipizzato.
+- **UI trigger**: il pulsante “Paga ora” è nel passo di selezione data (`lib/screens/booking/booking_date_selection/booking_date_selection_widget.dart`, sezione finale).
+
+## Flusso di pagamento
+
+1. L’utente preme “Paga ora”.
+2. `processStripePayment()` viene chiamato con importo (`service.price`), valuta `EUR`, email cliente e descrizione.
+3. Il manager invoca `initStripeTestPayment` (o `initStripePayment` in produzione) passando amount in centesimi.
+4. Cloud Function:
+   - Recupera/crea il customer Stripe (filtra per email).
+   - Genera `paymentIntent` e `ephemeralKey`.
+   - Restituisce `paymentId`, `client_secret`, `customer` e `ephemeralKey`.
+5. Per web viene mostrato un form custom, per mobile la native payment sheet (`Stripe.instance.presentPaymentSheet()`).
+6. Al successo, `paymentId` è salvato nel model `_model.paymentId` per completare il booking.
+
+### Persistenza in Firestore
+
+Durante la creazione dell’appuntamento (stesso widget `booking_date_selection`):
+
+- Viene scritto il documento `AppointmentsRecord` con:
+  - `startDate`, `endDate`, `serviceData`, `clientData`, `workersData`.
+  - Flag `isSecondAgenda = true` per segnalare l’origine “app ospite”.
+- Se tutte le prenotazioni richieste dal servizio sono completate (`currentReservation == service.calendarReservations`):
+  - Aggiorna `ClientsRecord.paid`.
+  - Crea un `SalesRecord` con snapshot cliente/servizio e, se presente, il `paymentId` Stripe (campo `stripePaymentId` se configurato).
+  - Registra un documento `PaymentsRecord` con metodo `credit_card`, importo e riferimento appuntamento.
+
+## Pagamento posticipato
+
+- Se l’utente non completa stripe (assenza `paymentId`), il flusso prosegue creando comunque l’appuntamento con metodo implicito “da pagare in struttura”.
+- Lo staff registrerà l’incasso in `bf-wellness` (metodo `cash` o `room`), aggiornando a posteriori `ClientsRecord.toPay`.
+
+## Integrazione con l’app staff
+
+- I pagamenti riusciti sono immediatamente visibili nella sezione pagamenti dell’app staff (stessa collezione `payments`).
+- Il campo `isSecondAgenda` permette allo staff di filtrare gli appuntamenti provenienti da self-service e gestire priorità.
+
+## Configurazione e sicurezza
+
+- **Chiavi**: `_kTestStripePublishableKey` e `_kTestStripeSecretKey` sono versionate per l’ambiente test. Per andare in produzione, impostare `_isProd = true` e valorizzare le chiavi prod sia nel payment manager sia nella Cloud Function.
+- **Apple Pay / Google Pay**: parametri `allowApplePay`/`allowGooglePay` sono attualmente `false`. Possono essere attivati passando `true` e configurando merchant ID.
+- **Error handling**: le eccezioni Stripe vengono intercettate; in caso di annullamento la funzione ritorna `StripePaymentResponse()` vuoto, permettendo all’utente di riprovare.
+
+## Best practice
+
+- Testare ciclicamente i pagamenti in modalità test (`_isProd = false`) per verificare che le callable funzionino dopo aggiornamenti Stripe/Firebase.
+- Registrare su Monday.com gli esiti anomali (errori Stripe, annullamenti frequenti) per allineare il team operativo.
+- Se si cambiano importi/valute, assicurarsi di passare sempre il valore in centesimi alla Cloud Function (`amount.round()`).

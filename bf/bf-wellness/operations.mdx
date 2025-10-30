@@ -1,0 +1,53 @@
+# Utility e strumenti operativi (BF Wellness Staff)
+
+Oltre a prenotazioni e pagamenti, l’app `bf-wellness` include una serie di moduli di supporto per lo staff. Questa pagina raccoglie le funzionalità “di contorno” e come contribuiscono all’ecosistema.
+
+## Ricerca globale
+
+- **Schermata**: `lib/screens/search/search_widget.dart`.
+- **Funzionalità**:
+  - Query congiunta su Algolia per servizi, clienti e pacchetti.
+  - Filtri rapidi per categoria servizio e struttura.
+  - Risultati con highlight del termine cercato (`AlgoliaObjectSnapshot.highlightResult`).
+- **Uso tipico**: recuperare rapidamente un cliente o un trattamento senza passare dalla navigazione standard.
+
+## Localizzazione e strutture
+
+- **Mappe**:
+  - `lib/screens/location_map/location_map_widget.dart` e `location_places_map` integrano `flutter_flow/flutter_flow_google_map.dart` (Google Maps SDK).
+  - `location_search` combina `flutter_google_places` e `geolocator` per cercare indirizzi o punti d’interesse.
+- **Gestione indirizzi**:
+  - `lib/screens/addresses/addresses_widget.dart` elenca spa/strutture con informazioni logistiche.
+  - Collega ai record `AccomodationsRecord` e `AccomodationServicesRecord` (vedi [Modello dati](../data-model#collezioni-specifiche-di-bf-spa)).
+
+## Impostazioni utente
+
+- **Lingua**: `lib/screens/utilities/languages/languages_widget.dart`.
+  - Modifica `FFAppState().language` e richiama `setLocale()` su `MaterialApp`.
+  - Le stringhe provengono da `lib/flutter_flow/internationalization.dart`; l’app supporta IT/EN/ES.
+- **Profilo**: `lib/screens/utilities/update_user_data/update_user_data_widget.dart` aggiorna `UsersRecord` (nome, avatar, lingua preferita).
+- **Account area**: `lib/screens/account/account_widget.dart` mostra riepilogo profilo, preferenze e opzioni di logout (`auth_util.signOut()`).
+
+## Onboarding e contenuti informativi
+
+- **Onboarding staff**: `lib/screens/onboarding/onboarding/onboarding_widget.dart`.
+  - Utilizza `PageView` e asset grafici in `assets/images` per spiegare funzionalità core.
+  - Mostrato solo al primo login (`FFAppState.firstLogin`).
+- **About**: `lib/screens/about/about_widget.dart` contiene descrizione del brand, contatti e link rapidi al sito WordPress (vedi [Sito web BF Wellness](../website)).
+- **Sezione legale**: `lib/screens/legal/tos/tos_widget.dart` e `legal/privacy_policy/privacy_policy_widget.dart` renderizzano documenti Markdown/HTML memorizzati in Firestore o statici negli asset.
+
+## Strumenti tecnici
+
+- **Router interno**: `lib/screens/utilities/router/router_widget.dart` offre un elenco di tutte le route registrate (`GoRouter`). Utile per QA e debug.
+- **Navbar secondaria**: `lib/components/navbar/navbar_widget.dart` viene riutilizzata in liste e agende per fornire filtri contestuali.
+
+## Integrazione con Monday.com
+
+- Le attività di aggiornamento contenuti (es. modifica testi About o onboarding) dovrebbero essere tracciate nella board “Marketing/Comunicazione” di Monday.
+- Annotare ID dei documenti interessati (`legal/tos`, `about`) nelle card Monday per facilitare audit futuri.
+
+## Best practice
+
+- Quando si aggiornano testi multi-lingua, ricordarsi di aggiornare tutte le chiavi in `internationalization.dart` e testare la selezione lingua.
+- Per nuove mappe o servizi geo-localizzati, assicurarsi che le API key di Google Maps siano configurate nelle piattaforme native (Android/iOS) oltre che nel web.
+- Utilizzare il router tecnico solo in ambienti di staging; in produzione mantenere permessi coerenti per evitare accessi accidentali a viste non ancora pubbliche.

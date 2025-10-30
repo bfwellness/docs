@@ -1,0 +1,41 @@
+# Categorie servizi
+
+<Callout type="info">
+Board ID: `1179916747` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Tassonomia utilizzata per raggruppare trattamenti, listini e report. 
+- Serve anche come filtro nelle app client.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Categorie e Servizi | topics | #579bfc | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Registro di creazione | `creation_log` | Log creazione (utente/data) |
+| Selezione colore | `color_picker` | — |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+| Mostra su Agenda | `checkbox` | Flag booleano |
+| Impegna Staff | `checkbox` | Flag booleano |
+
+## Uso operativo
+
+- Aggiungere categorie quando si introduce una nuova linea di servizi.
+- Le board correlate (Trattamenti, Centri di ricavo) fanno riferimento a questa tassonomia.
+
+## Integrazioni e relazioni
+
+- Relazioni da `Trattamenti e prodotti` e `Centri di ricavo`.
+- Campo `FirestoreId` (se presente) da registrare per sync automatico.
+
+## Checklist di manutenzione
+
+- Verificare che ogni categoria abbia associata almeno un trattamento.

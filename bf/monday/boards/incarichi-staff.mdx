@@ -1,0 +1,53 @@
+# Incarichi staff
+
+<Callout type="info">
+Board ID: `1180066886` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Board operativa per assegnare incarichi/turni alle operatrici.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Stagioni | topics | #037f4c | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Paga base | `numbers` | Unità: € |
+| Fine incarico | `date` | — |
+| Inizio incarico | `date` | — |
+| Struttura | `board_relation` | Relazione con: Strutture |
+| Anagrafica | `mirror` | Mirror di: Strutture → collega_schede |
+| Staff | `board_relation` | Relazione con: Staff |
+| Email | `mirror` | Mirror di: Staff → email |
+| Telefono | `mirror` | Mirror di: Staff → telefono |
+| Paga sindacale | `checkbox` | Flag booleano |
+| Tipo Contratto | `mirror` | Mirror di: Staff → label8 |
+| Taglia Maglia | `text` | — |
+| Taglia Pantaloni | `text` | — |
+| firestoreId | `text` | Identificativo collegato a Firestore |
+| Attivo | `checkbox` | Flag booleano |
+| Ultimo Sync | `date` | — |
+| Ultimo aggiornamento | `last_updated` | Log ultimi aggiornamenti |
+| Sotto elementi | `subtasks` | Subitems gestiti dalla board: Sotto elementi di Incarichi staff |
+
+## Uso operativo
+
+- Ogni incarico assegnato ha stato e date.
+- Subitems consentono di dettagliare sotto-attività o sessioni.
+
+## Integrazioni e relazioni
+
+- Relazione con board Staff (colonna persone).
+- Automazioni inviano reminder su Slack/email (da documentare).
+
+## Checklist di manutenzione
+
+- Archiviare incarichi completati.
+- Verificare che gli incarichi siano allineati con `Prenotazioni`.

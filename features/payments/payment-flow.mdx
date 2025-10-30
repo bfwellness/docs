@@ -1,0 +1,19 @@
+# Flusso Pagamenti
+
+Processo di registrazione pagamenti.
+
+## Flow
+
+1. `PaymentCreateWidget` - Insert amount, method, discount
+2. `PaymentConfirmWidget` - Confirm
+3. Save to Firestore `/payments`
+4. Update `clients.paid` and `clients.toPay`
+
+## Payment Methods
+
+- Cash
+- Card
+- Bank transfer
+- Room charge
+
+[Implementation details TBD]

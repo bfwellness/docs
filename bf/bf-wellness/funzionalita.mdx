@@ -1,0 +1,27 @@
+# Mappa funzionalità (BF Wellness Staff)
+
+Questa pagina è la bussola per esplorare in profondità il prodotto `bf-wellness`. Ogni macro-area funzionale ha una pagina dedicata con analisi dettagliata del flusso, riferimenti al codice Flutter e legami con il [modello dati condiviso](../data-model).
+
+## Accesso e onboarding
+
+- **Autenticazione**: implementata nei moduli `lib/screens/auth/sign_in` e `lib/screens/auth/sign_up`, supporta Email/Password, Google, Facebook e Apple (Firebase Auth).
+- **Stato di onboarding**: tracciato tramite `FFAppState.firstLogin` (`lib/app_state.dart:31`) e gestito dal carosello in `lib/screens/onboarding/onboarding/onboarding_widget.dart`.
+- **Blocchi di routing**: eventuali utenti non autenticati sono reindirizzati tramite `AppStateNotifier` (`lib/flutter_flow/nav/app_state.dart`).
+
+## Come orientarsi
+
+| Area | Cosa copre | Pagine dedicate |
+| --- | --- | --- |
+| Dashboard & navigazione | Home, side/top nav, ricerca globale, indicatori rapidi | [Dashboard e navigazione](dashboard) |
+| Prenotazioni | Flussi completo (creazione, agenda, riprogrammazione, cancellazione) e logica slot | [Gestione prenotazioni](prenotazioni) |
+| Clienti | CRM interno: liste, schede dettaglio, integrazione Algolia | [Gestione clienti](clienti) |
+| Pagamenti & vendite | Incassi, metodi di pagamento, vendite prodotti/pacchetti | [Pagamenti e vendite](pagamenti) |
+| Operations & utility | Localizzazione, lingue, router tecnico, sezione legale | [Utility e strumenti operativi](operations) |
+
+Ogni pagina include:
+
+- Collegamenti diretti ai widget Flutter (es. `lib/screens/booking/booking_confirm/booking_confirm_widget.dart`) e componenti condivisi (es. `lib/components/services_list/services_list_widget.dart`).
+- Rimandi al modello dati Firestore (per esempio `appointments`, `clients`, `payments`) in modo da sapere quali campi vengono letti/scritti in ogni flusso.
+- Note operative e best practice per mantenere coerenza con Monday.com e con il sito istituzionale.
+
+> 💡 Suggerimento: in Mintlify usa il breadcrumb o il motore di ricerca interno per spostarti rapidamente tra le sezioni quando confronti più moduli.

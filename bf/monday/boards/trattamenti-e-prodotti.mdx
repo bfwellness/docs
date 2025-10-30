@@ -1,0 +1,50 @@
+# Trattamenti e prodotti
+
+<Callout type="info">
+Board ID: `1175239733` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Catalogo centrale dei trattamenti SPA, pacchetti benessere e prodotti retail.
+- Supporta descrizioni multilingua e asset grafici.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Trattamenti e pacchetti | topics | #579bfc | 65536 |
+| Prodotti retail | nuovo_gruppo | #037f4c | 131072.0 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Prezzo | `numbers` | Unità: € |
+| Durata (minuti) | `numbers` | — |
+| Staff necessario | `numbers` | — |
+| Descrizione IT | `long_text` | — |
+| Immagine | `file` | — |
+| Categoria | `board_relation` | Relazione con: Categorie servizi |
+| Impegni | `numbers` | — |
+| Descrizione EN | `text` | — |
+| Descrizione ES | `text` | — |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+| Qualifiche staff | `board_relation` | Relazione con: Qualifiche staff |
+
+## Uso operativo
+
+- Marketing aggiorna copy e immagini, Operations aggiorna prezzi e durata.
+- `Staff necessario` indica quante operatrici servono per erogare il trattamento.
+- La relazione `Categoria` alimenta filtri nelle app; la relazione `Qualifiche staff` definisce chi può erogare il trattamento.
+
+## Integrazioni e relazioni
+
+- Sincronizzato con Firestore (`services`/`products`) tramite campo `FirestoreId`.
+- Collegato ai subitems `Listini` per definire prezzi specifici per struttura.
+
+## Checklist di manutenzione
+
+- Aggiornare traduzioni EN/ES contestualmente a quella italiana.
+- Verificare periodicamente immagini e rimuovere asset non più usati.

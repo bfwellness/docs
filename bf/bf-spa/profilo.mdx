@@ -1,0 +1,54 @@
+# Profilo, contenuti e supporto (BF Spa)
+
+L’area personale dell’ospite consente di gestire i propri dati, consultare contenuti esclusivi e ottenere supporto. Questa pagina illustra i moduli coinvolti e come interagiscono con il backend Firebase e gli altri asset digitali.
+
+## Gestione account
+
+- **Schermata principale**: `lib/screens/account/account_widget.dart`.
+- **Funzioni**:
+  - Modifica nome, cognome, numero di telefono e preferenze (scrive su `UsersRecord` in Firestore).
+  - Visualizza riepilogo prenotazioni future, pagamenti recenti e bonus/crediti (se abilitati).
+- **Componenti**:
+  - `SideNavBarWidget` / `TopNavBarWidget` adattati al contesto ospite.
+  - Sezione impostazioni con link a cambio password (`sendPasswordResetEmail` in `auth_util.dart`) e logout.
+
+## Lingue e preferenze
+
+- **Widget**: `lib/screens/utilities/languages/languages_widget.dart`.
+- **Logica**:
+  - Aggiorna `FFAppState.language` e `UsersRecord.language`.
+  - Richiama `setLocale()` in `MyApp.setLocale` (`lib/main.dart`) per aggiornare l’interfaccia in tempo reale.
+- **Localizzazione**: stringhe gestite in `lib/flutter_flow/internationalization.dart`, condivise con l’app staff (IT/EN/ES).
+
+## Contenuti training
+
+- **Schermata**: `lib/screens/training/training/training_widget.dart`.
+- **Dati**:
+  - Stream su `TrainingVideosRecord` (vedi [Modello dati](../data-model#collezioni-specifiche-di-bf-spa)).
+  - Ogni video include `videoUrl` (YouTube), `thumbnail`, `duration`, `tags`.
+- **Player**:
+  - Usa `youtube_player_iframe` per lo streaming in-app.
+  - Pulsanti “Guarda dopo”/bookmark possono essere abilitati salvando metadati in `UsersRecord` (campo custom).
+- **Allineamento marketing**:
+  - Aggiornamenti editoriali devono essere tracciati nella board Monday “Contenuti” e coerenti con il sito WordPress ([pagina dedicata](../website)).
+
+## Help center e legal
+
+- **Supporto**: `lib/screens/help/help_widget.dart`.
+  - Attualmente mostra un placeholder (`EmptyAccomodationsWidget`). È il punto in cui inserire contatti diretti (telefono, email, chat) e FAQ.
+  - Raccomandato collegare form/contact via WordPress o strumenti terzi.
+- **Legal**:
+  - `lib/screens/legal/tos/tos_widget.dart` e `legal/privacy_policy/privacy_policy_widget.dart` renderizzano documenti ufficiali.
+  - I contenuti possono essere caricati via Firestore (collezione `legal_documents`) o come asset statici (HTML/Markdown).
+- **Cookie / consensi**: eventuali banner devono essere sincronizzati con il sito (`bfwellness.it`) per coerenza comunicativa.
+
+## Notifiche e comunicazioni
+
+- Al momento non sono presenti notifiche push. Per future estensioni si può utilizzare Firebase Cloud Messaging condividendo topic con l’app staff (es. aggiornamenti prenotazioni).
+- Per comunicazioni manuali (email marketing) utilizzare Monday.com per coordinare il calendario invii con marketing e reception.
+
+## Best practice
+
+- Mantenere aggiornati i dati utente in `UsersRecord` per evitare discrepanze tra app e Monday (es. preferenze lingua).
+- Quando si introducono nuove sezioni (es. fidelizzazione), documentare subito campi aggiuntivi sia qui sia in [Modello dati](../data-model).
+- Testare la riproduzione video su rete mobile e desktop per garantire performance e conformità alle policy YouTube.

@@ -1,0 +1,26 @@
+# Funzionalità utente (BF Spa Ospiti)
+
+Questa pagina offre una panoramica delle principali esperienze dell’app `bf-spa`. Ogni macro-area ha una scheda dedicata con analisi approfondita del flusso, riferimenti al codice e rimandi al [modello dati condiviso](../data-model).
+
+## Accesso e onboarding
+
+- I moduli `lib/screens/auth/sign_in` e `lib/screens/auth/sign_up` supportano Email/Password, Google, Apple (iOS) e Facebook.
+- L’onboarding (`lib/screens/onboarding/onboarding/onboarding_widget.dart`) è mostrato al primo login, sfruttando `FFAppState.firstLogin`.
+- Il router (`AppStateNotifier`) reindirizza automaticamente gli utenti non autenticati alla pagina di accesso.
+
+## Mappa delle funzionalità
+
+| Area | Descrizione | Pagine di dettaglio |
+| --- | --- | --- |
+| Home & catalogo | Scelta struttura, esplorazione servizi, contenuti editoriali | [Home e catalogo](catalogo) |
+| Prenotazioni self-service | Flussi di booking, gestione agenda, cancellazioni | [Prenotazioni self-service](prenotazioni) |
+| Pagamenti | Integrazione Stripe, gestione stati pagamento, fallback manuali | [Pagamenti ospite](pagamenti) |
+| Profilo & supporto | Gestione account, lingue, training, help center | [Profilo e supporto](profilo) |
+
+Ogni pagina illustra:
+
+- Widget Flutter interessati (es. `lib/screens/booking/booking_confirm/booking_confirm_widget.dart`).
+- Struct e record Firestore utilizzati (`AccomodationsRecord`, `AppointmentsRecord`, `PaymentsRecord`).
+- Integrazioni esterne (Stripe, Algolia, YouTube iframe) e punti di contatto con l’app staff.
+
+> ℹ️ Le decisioni di UX (passaggi obbligati, messaggi informativi, fallback) dovrebbero essere sincronizzate con le board Monday.com dedicate all’esperienza ospite.

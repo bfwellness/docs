@@ -1,0 +1,59 @@
+# Staff
+
+<Callout type="info">
+Board ID: `1175246540` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Schede personali del personale interno/esterno, con stato occupazionale, informazioni contrattuali e IBAN per pagamenti.
+- La colonna `Qualifiche` collega alle competenze rilevanti per l'erogazione dei trattamenti.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Anagrafiche | topics | #7F5347 | 65536 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Stato | `status` | Stati: Attivo, Sospeso, Non attivo |
+| Data di nascita | `date` | — |
+| Registro di creazione | `creation_log` | Log creazione (utente/data) |
+| Colore | `color_picker` | — |
+| Telefono | `phone` | Numero telefonico formattato |
+| Ultimo aggiornamento | `last_updated` | Log ultimi aggiornamenti |
+| Email | `email` | Campo email con link mailto |
+| IBAN | `text` | — |
+| Tipo contratto | `status` | Stati: Partita IVA, Contratto, Non definito |
+| Sesso | `dropdown` | Opzioni: F, M |
+| Note | `text` | — |
+| Documento | `file` | — |
+| Allegati | `file` | — |
+| Storico | `checkbox` | Flag booleano |
+| Escludi tabulati | `checkbox` | Flag booleano |
+| Qualifiche | `board_relation` | Relazione con: Qualifiche staff |
+| FirestoreId | `text` | Identificativo collegato a Firestore |
+| Ultimo Sync | `date` | — |
+| Supervisore | `checkbox` | Flag booleano |
+
+## Uso operativo
+
+- Assicurarsi che ogni dipendente abbia uno stato aggiornato (`Attivo`, `Sospeso`, etc.).
+- La colonna `Tipo contratto` distingue Partita IVA, Contratto dipendente, ecc., utile per payroll.
+- `FirestoreId` collega la scheda al documento Firestore `workers`, garantendo allineamento con le app Flutter.
+- Le checkbox `Storico` / `Escludi tabulati` evitano conteggi in report automatici.
+
+## Integrazioni e relazioni
+
+- Relazione con `Qualifiche staff` per assegnare competenze.
+- Relazione con `Utenti App BF` per abilitare accessi digitali.
+- Automazioni Make.com aggiornano la board `Incarichi staff` quando cambia lo stato del dipendente.
+
+## Checklist di manutenzione
+
+- Aggiorna `Ultimo Sync` dopo sincronizzazione riuscita con Firestore.
+- Verifica mensile dei documenti allegati (contratti, certificazioni).

@@ -1,0 +1,50 @@
+# Anagrafiche
+
+<Callout type="info">
+Board ID: `1175215967` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Archivio anagrafico unico per clienti, fornitori, partner e tour operator.
+- Include dati fiscali (P.IVA, Codice Fiscale, SDI) e contatti istituzionali.
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Gestione anagrafiche | topics | #579bfc | 131072 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Logo | `file` | — |
+| Registro di creazione | `creation_log` | Log creazione (utente/data) |
+| Tour operator | `checkbox` | Flag booleano |
+| Cliente | `checkbox` | Flag booleano |
+| Fornitore | `checkbox` | Flag booleano |
+| Indirizzo | `location` | — |
+| P. IVA | `text` | — |
+| Codice Fiscale | `text` | — |
+| Note | `text` | — |
+| Codice SDI | `text` | — |
+| Email | `email` | Campo email con link mailto |
+| PEC | `email` | Campo email con link mailto |
+
+## Uso operativo
+
+- Compilare un item per ogni entità legale coinvolta (clienti corporate, fornitori, società di gestione).
+- I flag `Tour operator`, `Cliente`, `Fornitore` classificano l'entità per filtrare i report.
+- Il campo `Logo` alimenta comunicazioni marketing e presentazioni.
+
+## Integrazioni e relazioni
+
+- Relazioni indirette: board `Strutture` associa ogni struttura a un'anagrafica per estrarre i dati fiscali.
+- I dati possono essere esportati tramite Make.com verso il gestionale contabile (da definire).
+
+## Checklist di manutenzione
+
+- Revisionare annualmente codici fiscali/SDI in caso di cambi societari.
+- Verificare che ogni nuovo fornitore/cliente venga censito prima di attivare collaborazioni.

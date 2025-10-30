@@ -1,0 +1,46 @@
+# Firma documenti
+
+<Callout type="info">
+Board ID: `1190068408` · Workspace: **BF Wellness** · Owner: **BF Wellness Admin**
+</Callout>
+
+## Panoramica
+
+- Workflow per inviare documenti da firmare digitalmente (contratti, moduli).
+
+## Gruppi
+
+| Titolo | ID | Colore | Posizione |
+| --- | --- | --- | --- |
+| Inviati | topics | #579bfc | 65536 |
+| Da inviare | nuovo_gruppo | #CAB641 | 131072.0 |
+
+## Colonne
+
+| Colonna | Tipo | Dettagli |
+| --- | --- | --- |
+| Name | `name` | — |
+| Stato | `status` | Stati: Invio in corso, Inviato, Bloccato, In attesa |
+| Data | `date` | — |
+| Modello documento | `board_relation` | Relazione con: Modelli documento |
+| File | `mirror` | Mirror di: Modelli documento → file1 |
+| Oggeto email | `text` | — |
+| Testo email | `long_text` | — |
+| Sotto elementi | `subtasks` | Subitems gestiti dalla board: Sotto elementi di Firma documenti |
+| Prepara destinatari | `button` | — |
+| Invia | `button` | Azione: Invia ora! |
+
+## Uso operativo
+
+- Selezionare un modello, compilare email/oggetto, utilizzare pulsante `Invia`.
+- Monitorare gli stati (In corso, Inviato, Bloccato, In attesa).
+
+## Integrazioni e relazioni
+
+- Relazione con `Modelli documento` per recuperare template.
+- Subitems gestiscono i destinatari e allegati firmati.
+
+## Checklist di manutenzione
+
+- Ripulire file firmati dopo archiviazione.
+- Verificare automazioni di invio periodicamente.
