@@ -42,7 +42,6 @@
           {
             "group": "Sito Web & Siteground",
             "pages": [
-              "bf/website/index",
               "bf/website/overview",
               "bf/website/operativita",
               "bf/website/note-tecniche"
